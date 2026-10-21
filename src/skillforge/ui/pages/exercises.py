@@ -10,6 +10,7 @@ from skillforge import paths, warehouse
 from skillforge.content.loader import load_exercises
 from skillforge.content.models import Exercise
 from skillforge.evaluator import EvalContext, EvalResult, evaluate
+from skillforge.progress.service import default_progress
 from skillforge.ui.components import render_eval_result
 
 DIFFICULTY = {1: "●○○ łatwe", 2: "●●○ średnie", 3: "●●● trudne"}
@@ -70,7 +71,14 @@ def render() -> None:
     result_key = f"result:{ex.id}"
     if st.button("▶ Sprawdź", type="primary", key=f"check:{ex.id}"):
         with st.spinner("Uruchamiam i porównuję z golden setem…"):
-            st.session_state[result_key] = evaluate(ex.to_case(), code, EvalContext(wh))
+            outcome = evaluate(ex.to_case(), code, EvalContext(wh))
+        st.session_state[result_key] = outcome
+        default_progress().record_attempt(ex.id, code, outcome)
+
+    history = default_progress().attempts(ex.id)
+    if history:
+        solved = "✅ rozwiązane" if any(a.passed for a in history) else "jeszcze nierozwiązane"
+        st.caption(f"Próby: {len(history)} · {solved}")
 
     result: EvalResult | None = st.session_state.get(result_key)
     if result is not None:

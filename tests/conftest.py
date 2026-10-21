@@ -14,3 +14,14 @@ def warehouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
     code = build_warehouse(path, scale=TEST_SCALE, quiet=True)
     assert code == 0, "dbt build failed for the test warehouse"
     return path
+
+
+@pytest.fixture(autouse=True)
+def isolated_progress(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Never touch the real var/progress.db from tests."""
+    from skillforge import paths
+
+    db = tmp_path / "progress.db"
+    monkeypatch.setattr(paths, "PROGRESS_DB_PATH", db)
+    monkeypatch.setattr(paths, "PROGRESS_JSON_PATH", tmp_path / "progress.json")
+    return db

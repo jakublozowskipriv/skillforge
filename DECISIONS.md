@@ -47,3 +47,10 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Lekcja = Markdown z frontmatterem YAML parsowanym własną funkcją (`split_frontmatter`) · bez dodatkowej zależności; format zgodny z MkDocs.
 - 2026-10-21 · Walidacja dwupoziomowa: `validate_structure` (szybka, bez hurtowni, w pytest na prawdziwym `content/`) + `validate_golden_set` (pełna hurtownia, w CI) · zepsuta treść wychodzi już w testach jednostkowych.
 - 2026-10-21 · Ruff: ignoruję RUF001–RUF003 (niejednoznaczne znaki Unicode) · polska typografia (półpauzy, „cudzysłowy”) w docstringach i treściach jest zamierzona.
+- 2026-10-21 · Payloady zdarzeń jako modele pydantic per typ (`extra=forbid`), walidowane przy zapisie i odczycie · zepsute zdarzenie z innego urządzenia nie przejdzie importu po cichu.
+- 2026-10-21 · SQLite: znaczniki czasu jako tekst o stałej szerokości (`%Y-%m-%dT%H:%M:%S.%fZ`), `INSERT OR IGNORE`, połączenie per operacja · porządek leksykalny = czasowy; idempotencja w bazie; bezpieczne przy wielu procesach.
+- 2026-10-21 · Kolejność zdarzeń: `occurred_at`, potem `recorded_at`, potem `event_id` · deterministyczna na każdym urządzeniu, niezależna od kolejności synchronizacji.
+- 2026-10-21 · Korekta KPI/poziomu = nowe zdarzenie z nowszym `occurred_at` (ostatnie wygrywa) · brak UPDATE; historia zachowana do wykresów.
+- 2026-10-21 · `progress.json` = pełny log + `summary` dla tutora (poziomy, słabe ćwiczenia, KPI, sesje z 28 dni, quizy) · jeden plik do synchronizacji i do czytania przez `/next-lesson`.
+- 2026-10-21 · Źródło urządzenia z `SKILLFORGE_SOURCE` (domyślnie `pc`) · etap 2 (PWA) zapisze `phone`.
+- 2026-10-21 · Testy izolują `var/progress.db` fixture'em autouse · testy UI zapisują próby i nie mogą zaśmiecać prawdziwego postępu.

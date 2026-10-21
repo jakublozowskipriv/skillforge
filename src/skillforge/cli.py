@@ -22,6 +22,10 @@ content_app = typer.Typer(
     help="Lessons, exercises and flashcards in content/.", no_args_is_help=True
 )
 app.add_typer(content_app, name="content")
+progress_app = typer.Typer(
+    help="Your progress (event log in var/progress.db).", no_args_is_help=True
+)
+app.add_typer(progress_app, name="progress")
 
 SeedOpt = Annotated[int, typer.Option(help="Random seed (dataset is deterministic per seed).")]
 ScaleOpt = Annotated[float, typer.Option(help="Volume multiplier; 1.0 ≈ 19k orders.")]
@@ -112,6 +116,91 @@ def content_validate(
         f"{len(index.cards)} cards" + ("" if golden else " (golden set not checked)"),
         fg="green",
     )
+
+
+def _echo_json(data: object) -> None:
+    import json
+
+    typer.echo(json.dumps(data, ensure_ascii=False, indent=2, default=str))
+
+
+@progress_app.command("export")
+def progress_export(
+    out: Annotated[Path, typer.Option(help="Output file.")] = paths.PROGRESS_JSON_PATH,
+) -> None:
+    """Write the event log + summary to progress.json (read by the tutor commands)."""
+    from skillforge.progress.export import export_json
+    from skillforge.progress.service import default_progress
+
+    n = export_json(default_progress().store, out)
+    typer.echo(f"{n} events → {out}")
+
+
+@progress_app.command("import")
+def progress_import(file: Annotated[Path, typer.Argument(help="progress.json to merge.")]) -> None:
+    """Merge events from another device's export (idempotent)."""
+    from skillforge.progress.export import import_json
+    from skillforge.progress.service import default_progress
+
+    n = import_json(default_progress().store, file)
+    typer.echo(f"{n} new events imported")
+
+
+@progress_app.command("summary")
+def progress_summary() -> None:
+    """Print the tutor summary (levels, weak exercises, KPI, recent sessions) as JSON."""
+    from skillforge.progress.export import summary
+    from skillforge.progress.service import default_progress
+
+    _echo_json(summary(default_progress().events()))
+
+
+@progress_app.command("attempts")
+def progress_attempts(
+    exercise_id: Annotated[str, typer.Argument(help="Exercise id, e.g. ae-ex-01.")],
+    last: Annotated[bool, typer.Option("--last", help="Only the most recent attempt.")] = False,
+) -> None:
+    """Print attempts (code + evaluation result) as JSON — input for /review."""
+    from dataclasses import asdict
+
+    from skillforge.progress.service import default_progress
+
+    found = default_progress().attempts(exercise_id)
+    if not found:
+        typer.secho(f"No attempts for {exercise_id}", fg="yellow", err=True)
+        raise typer.Exit(1)
+    selected = found[-1:] if last else found
+    _echo_json([asdict(a) for a in selected])
+
+
+@progress_app.command("record-quiz")
+def progress_record_quiz(
+    topic: Annotated[str, typer.Option(help="Topic id from content/tree.yaml.")],
+    score: Annotated[int, typer.Option(help="Correct answers.")],
+    total: Annotated[int, typer.Option(help="Number of questions.")],
+    note: Annotated[str, typer.Option(help="Short note: what went wrong.")] = "",
+) -> None:
+    """Record a quiz result (used by /quiz)."""
+    from skillforge.progress.service import default_progress
+
+    default_progress().record_quiz(topic, score, total, note)
+    typer.echo(f"quiz {topic}: {score}/{total} recorded")
+
+
+@progress_app.command("brag")
+def progress_brag(
+    out: Annotated[Path | None, typer.Option(help="Write to file instead of stdout.")] = None,
+) -> None:
+    """Export the brag doc as Markdown."""
+    from skillforge.progress.export import brag_markdown
+    from skillforge.progress.service import default_progress
+
+    text = brag_markdown(default_progress().brag_entries())
+    if out:
+        out.write_text(text, encoding="utf-8")
+        typer.echo(f"→ {out}")
+    else:
+        typer.echo(text)
 
 
 if __name__ == "__main__":
