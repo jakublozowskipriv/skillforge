@@ -44,6 +44,8 @@ extend-exclude = ["dbt"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "PTH", "N"]
+# Polish prose in docstrings/comments/strings legitimately uses en dashes and typographic quotes.
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
 strict = true

@@ -1,0 +1,55 @@
+cards:
+  # --- ae-01: warstwy w dbt ---------------------------------------------------------------
+  - id: ae-c-01
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Jakie są cztery typowe warstwy projektu dbt i co robi każda z nich?
+    back: |
+      **raw** (źródła, bez zmian) → **staging** (1:1 ze źródłem: typy, nazwy, normalizacja,
+      deduplikacja) → **intermediate** (reużywalne klocki logiki) → **marts** (fakty i wymiary
+      z jasnym grainem dla BI).
+  - id: ae-c-02
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Czym różni się `source()` od `ref()` w dbt?
+    back: |
+      `source('raw', 'tabela')` wskazuje dane **spoza** dbt (zadeklarowane w YAML, z testami
+      i freshness). `ref('model')` wskazuje **inny model dbt** — z tych odwołań dbt buduje DAG
+      i kolejność uruchamiania.
+  - id: ae-c-03
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Dlaczego deduplikacja eventów z API przewoźnika należy do warstwy staging?
+    back: |
+      Bo duplikaty są cechą **źródła** (dostarczanie at-least-once), a nie logiki biznesowej.
+      Naprawiasz je raz, najbliżej źródła — każdy model niżej może zakładać unikalność.
+  - id: ae-c-04
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Wymień dwa antywzorce w warstwie staging.
+    back: |
+      1. JOIN-y między źródłami (staging przestaje być 1:1 ze źródłem).
+      2. Logika biznesowa (np. definicja on-time) — należy do martów.
+  - id: ae-c-05
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Co robi `qualify` i kiedy go używasz?
+    back: |
+      Filtruje wiersze po wyniku funkcji okna (jak `having` dla `group by`). Typowo:
+      `qualify row_number() over (partition by klucz order by loaded_at) = 1` — deduplikacja
+      bez podzapytania.
+  - id: ae-c-06
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: "Co wybiorą selektory `dbt build --select fct_shipments+` i `--select +fct_shipments`?"
+    back: |
+      `fct_shipments+` — model i wszystko, co od niego **zależy** (downstream).
+      `+fct_shipments` — model i wszystko, czego **potrzebuje** (upstream).
+  - id: ae-c-07
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Do czego służy `loaded_at_field` w definicji źródła?
+    back: |
+      Do sprawdzania świeżości danych (`dbt source freshness`): dbt porównuje najnowszy
+      `loaded_at` z progami `warn_after` / `error_after`. To sensor świeżości zdefiniowany
+      obok danych, a nie w orkiestratorze.

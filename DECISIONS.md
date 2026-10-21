@@ -43,3 +43,7 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · CI: po testach pełny `data build` (scale 1.0) + `content validate` · snapshoty są liczone na pełnym datasecie; testy jednostkowe na małym (0.05).
 - 2026-10-21 · UI: `st.text_area` (monospace przez CSS) zamiast edytora z podświetlaniem · zero dodatkowych zależności w MVP; edytor w ROADMAP.
 - 2026-10-21 · Streamlit: `gatherUsageStats = false`, `toolbarMode = minimal` · brak telemetrii z lokalnej aplikacji, brak zbędnego „Deploy”.
+- 2026-10-21 · `content/tree.yaml` zawiera wszystkie ścieżki z briefu, ale bez priorytetów (te są w prywatnym `profile.yaml`) · drzewo to publiczny program nauki; kolejność priorytetów jest osobista.
+- 2026-10-21 · Lekcja = Markdown z frontmatterem YAML parsowanym własną funkcją (`split_frontmatter`) · bez dodatkowej zależności; format zgodny z MkDocs.
+- 2026-10-21 · Walidacja dwupoziomowa: `validate_structure` (szybka, bez hurtowni, w pytest na prawdziwym `content/`) + `validate_golden_set` (pełna hurtownia, w CI) · zepsuta treść wychodzi już w testach jednostkowych.
+- 2026-10-21 · Ruff: ignoruję RUF001–RUF003 (niejednoznaczne znaki Unicode) · polska typografia (półpauzy, „cudzysłowy”) w docstringach i treściach jest zamierzona.

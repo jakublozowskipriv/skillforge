@@ -1,0 +1,87 @@
+# Drzewo kompetencji: ścieżka → temat. Kolejność ścieżek NIE oznacza priorytetu — priorytety
+# są prywatne (profile.yaml: path_priority). Poziomy 0–3 per temat trzyma log postępu.
+#   0 — nie znam · 1 — rozumiem pojęcia · 2 — robię samodzielnie · 3 — uczę innych / prod
+paths:
+  - id: ai-engineering
+    title: AI engineering dla analityki
+    description: Ewaluacja i wdrażanie rozwiązań LLM w analityce.
+    topics:
+      - id: ai.llm-evals
+        title: Ewaluacja LLM
+        description: Golden sets, execution accuracy, LLM-as-judge, testy regresji.
+      - id: ai.context-curation
+        title: Kuracja kontekstu i metadanych
+        description: Opisy tabel i metryk, słowniki, przykłady few-shot dla agentów.
+      - id: ai.text-to-sql
+        title: Text-to-SQL
+        description: Architektury agentów SQL, walidacja zapytań, typowe błędy.
+      - id: ai.mcp-server
+        title: Serwer MCP w Pythonie
+        description: Narzędzia, zasoby i prompty MCP; udostępnianie danych agentom.
+      - id: ai.rag-basics
+        title: Podstawy RAG
+        description: Chunking, embeddingi, retrieval, ewaluacja odpowiedzi.
+      - id: ai.data-security
+        title: Bezpieczeństwo danych
+        description: PII, uprawnienia, maskowanie, prompt injection w narzędziach.
+
+  - id: analytics-engineering
+    title: Analytics engineering z dbt
+    description: Od surowych danych do przetestowanych, udokumentowanych martów.
+    topics:
+      - id: ae.dbt-layers
+        title: Warstwy w dbt
+        description: sources, staging, intermediate, marts; ref i source.
+      - id: ae.dimensional-modeling
+        title: Modelowanie wymiarowe (Kimball)
+        description: Grain, fakty, wymiary, SCD typu 2.
+      - id: ae.data-tests-contracts
+        title: Testy i kontrakty danych
+        description: Generic, singular i unit testy dbt; kontrakty modeli.
+      - id: ae.materializations
+        title: Materializacje i incremental
+        description: view, table, incremental, ephemeral; spóźnione dane.
+      - id: ae.semantic-metrics
+        title: Warstwa semantyczna i metryki
+        description: Definicje metryk, licznik i mianownik, spójność w BI.
+
+  - id: business-thinking
+    title: Myślenie biznesowe
+    description: Od analizy do decyzji i jej wartości w PLN.
+    topics:
+      - id: bt.metric-trees
+        title: Drzewa metryk
+      - id: bt.unit-economics
+        title: Unit economics logistyki
+      - id: bt.decision-framing
+        title: Framing decyzji
+        description: Jaką decyzję wspieramy i ile jest warta.
+      - id: bt.pyramid-memo
+        title: Zasada piramidy i memo jednostronicowe
+
+  - id: statistics
+    title: Statystyka pod eksperymenty
+    description: Wnioskowanie z danych eksperymentalnych i quasi-eksperymentalnych.
+    topics:
+      - id: st.distributions-ci
+        title: Rozkłady i przedziały ufności
+      - id: st.bootstrap
+        title: Bootstrap
+      - id: st.ab-tests
+        title: Testy A/B
+      - id: st.holdout
+        title: Grupy holdout
+      - id: st.diff-in-diff
+        title: Difference-in-differences
+
+  - id: forecasting-ml
+    title: Prognozowanie i ML
+    description: Opcjonalnie, później.
+    optional: true
+    topics:
+      - id: fm.time-series
+        title: Prognozowanie szeregów czasowych
+      - id: fm.ml-basics
+        title: Podstawy ML
+      - id: fm.interpretability
+        title: Interpretowalność modeli

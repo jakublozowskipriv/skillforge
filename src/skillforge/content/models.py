@@ -9,17 +9,96 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from skillforge.evaluator import CompareSpec, GoldenCase, PythonCase, PythonTest, ResultSet, SqlCase
 
+ID_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
+TOPIC_PATTERN = r"^[a-z]+\.[a-z0-9]+(-[a-z0-9]+)*$"
+APPLY_AT_WORK_HEADING = "## Jak zastosować w pracy"
+
+
+class Topic(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(pattern=TOPIC_PATTERN)
+    title: str
+    description: str = ""
+
+
+class LearningPath(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(pattern=ID_PATTERN)
+    title: str
+    description: str = ""
+    optional: bool = False
+    topics: list[Topic]
+
+
+class CompetenceTree(BaseModel):
+    """``content/tree.yaml``: path → topic. Levels 0–3 live in the progress log, not here."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    paths: list[LearningPath]
+
+    def topic(self, topic_id: str) -> Topic | None:
+        return next((t for p in self.paths for t in p.topics if t.id == topic_id), None)
+
+    def path_of(self, topic_id: str) -> LearningPath | None:
+        return next((p for p in self.paths if any(t.id == topic_id for t in p.topics)), None)
+
+    @property
+    def topic_ids(self) -> set[str]:
+        return {t.id for p in self.paths for t in p.topics}
+
+
+class Lesson(BaseModel):
+    """Markdown file with YAML frontmatter in ``paths/<path>/lessons/``."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(pattern=ID_PATTERN)
+    path: str
+    topic: str = Field(pattern=TOPIC_PATTERN)
+    title: str
+    minutes: int = Field(ge=5, le=30)
+    order: int = 0
+    exercises: list[str] = Field(default_factory=list)
+    body: str
+    source_path: Path | None = Field(default=None, exclude=True)
+
+    @property
+    def has_apply_at_work(self) -> bool:
+        return any(line.strip() == APPLY_AT_WORK_HEADING for line in self.body.splitlines())
+
+
+class Card(BaseModel):
+    """Flashcard. Front/back are Markdown."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    id: str = Field(pattern=ID_PATTERN)
+    topic: str = Field(pattern=TOPIC_PATTERN)
+    lesson: str | None = None
+    front: str
+    back: str
+    tags: list[str] = Field(default_factory=list)
+
+
+class CardDeck(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    cards: list[Card]
+
 
 class Exercise(BaseModel):
     """One exercise = one golden case (see README: golden set evaluator)."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    id: str = Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
+    id: str = Field(pattern=ID_PATTERN)
     title: str
     kind: Literal["sql", "python"]
     lesson: str | None = None
-    topic: str
+    topic: str = Field(pattern=TOPIC_PATTERN)
     difficulty: int = Field(ge=1, le=3)
     question: str
     hints: list[str] = Field(default_factory=list)

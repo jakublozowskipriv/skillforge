@@ -91,16 +91,27 @@ def content_snapshot(
 
 
 @content_app.command("validate")
-def content_validate(warehouse: WarehouseOpt = paths.WAREHOUSE_PATH) -> None:
-    """Check content schemas and that every reference solution reproduces its snapshot."""
-    from skillforge.content.validate import validate_exercises
+def content_validate(
+    warehouse: WarehouseOpt = paths.WAREHOUSE_PATH,
+    golden: Annotated[
+        bool, typer.Option(help="Also run reference solutions against snapshots (needs warehouse).")
+    ] = True,
+) -> None:
+    """Check schemas, cross-references and that every reference reproduces its snapshot."""
+    from skillforge.content.loader import load_content
+    from skillforge.content.validate import validate_content
 
-    problems = validate_exercises(paths.CONTENT_DIR, warehouse)
+    problems = validate_content(paths.CONTENT_DIR, warehouse if golden else None)
     for p in problems:
-        typer.secho(f"✗ {p.where}: {p.message}", fg="red", err=True)
+        typer.secho(f"✗ {p}", fg="red", err=True)
     if problems:
         raise typer.Exit(1)
-    typer.secho("✓ content valid", fg="green")
+    index = load_content()
+    typer.secho(
+        f"✓ content valid: {len(index.lessons)} lessons, {len(index.exercises)} exercises, "
+        f"{len(index.cards)} cards" + ("" if golden else " (golden set not checked)"),
+        fg="green",
+    )
 
 
 if __name__ == "__main__":
