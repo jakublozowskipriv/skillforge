@@ -12,6 +12,7 @@ Deliberate data-quality issues (material for staging exercises):
 - ``raw.shipment_events`` contains duplicated events (same payload, new ``event_id``),
 - some events arrive late (``loaded_at`` days after ``event_at``) — incremental models,
 - returned parcels have two ``delivery_failed`` events (not every event type is 1 per shipment),
+- ~10% of complaints get a follow-up complaint (complaints are not 1:1 with shipments),
 - ``event_at`` lands as an ISO-8601 string, some ``location_city`` values are NULL.
 """
 
@@ -69,8 +70,8 @@ SLA_HISTORY: tuple[tuple[int, str, int, str, str | None], ...] = (
     (2, "standard", 72, "2026-04-01", None),
     (2, "express", 24, "2025-01-01", None),
     (3, "standard", 48, "2025-01-01", None),
-    (3, "express", 24, "2025-01-01", "2026-03-15"),
-    (3, "express", 36, "2026-03-15", None),
+    (3, "express", 24, "2025-01-01", "2026-03-17"),
+    (3, "express", 36, "2026-03-17", None),
     (4, "standard", 72, "2025-01-01", None),
     (4, "express", 36, "2025-01-01", None),
     (5, "standard", 96, "2025-01-01", None),
@@ -438,6 +439,15 @@ def generate(seed: int = DEFAULT_SEED, scale: float = 1.0) -> RawTables:
             "t": complaint_t,
         }
     )
+    # Follow-ups: ~10% of customers complain again about the same parcel a few days later, so
+    # complaints are NOT 1:1 with shipments (joining them to shipments fans out).
+    # Drawn last on purpose — earlier tables stay identical when this block changes.
+    follow = complaints[rng.random(len(complaints)) < 0.10].copy()
+    follow["t"] = follow["t"] + rng.uniform(1 * DAY, 10 * DAY, len(follow)).astype(np.int64)
+    follow["created_at"] = _ts(follow["t"].to_numpy()).to_numpy()
+    follow["status"] = np.where(rng.random(len(follow)) < 0.6, "rejected", "open")
+    follow["compensation_pln"] = np.nan
+    complaints = pd.concat([complaints, follow], ignore_index=True)
     complaints = complaints[complaints["t"] < extract_s].sort_values(
         ["t", "shipment_id"], kind="stable"
     )

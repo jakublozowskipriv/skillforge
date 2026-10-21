@@ -1,0 +1,81 @@
+id: ae-ex-06
+title: Join SCD2 — jakie SLA obowiązywało w danym miesiącu?
+kind: sql
+lesson: ae-02
+topic: ae.dimensional-modeling
+difficulty: 3
+question: |
+  Pakomat24 (`PAKO`) w trakcie półrocza zmienił SLA dla usługi `express`. Zbuduj join
+  **point-in-time** do `marts.dim_carrier_sla` samodzielnie — nie korzystaj z kolumn
+  `sla_hours` / `carrier_sla_key` z `fct_shipments`.
+
+  Wejście: `staging.stg_raw__shipments`, `staging.stg_raw__orders` (poziom usługi),
+  `marts.dim_carrier`, `intermediate.int_shipment_milestones` (`picked_up_at`).
+  Obowiązuje wersja SLA ważna w **dniu odbioru** przesyłki.
+
+  Dla przesyłek PAKO `express`, które zostały odebrane, zwróć:
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `month` | pierwszy dzień miesiąca odbioru (typ `date`) |
+  | `sla_hours` | SLA obowiązujące w dniu odbioru |
+  | `shipments` | liczba przesyłek |
+
+  Jeśli w jednym miesiącu obowiązywały dwie wersje SLA, ten miesiąc ma dwa wiersze.
+hints:
+  - "Warunek joinu SCD2: ten sam przewoźnik i poziom usługi oraz `dzień_odbioru >= valid_from and dzień_odbioru < valid_to` (`valid_to` jest wyłączne)."
+  - "`date_trunc('month', d)` zwraca timestamp — rzutuj na `date`, żeby typ zgadzał się z oczekiwanym."
+  - Jeśli dostajesz więcej przesyłek niż powinno być, sprawdź, czy nie złączyłeś z wszystkimi wersjami SLA naraz (brak warunku na daty = fan-out).
+reference: |
+  with picked as (
+      select
+          s.shipment_id,
+          cast(m.picked_up_at as date) as picked_date,
+          o.service_level,
+          c.carrier_id
+      from staging.stg_raw__shipments as s
+      inner join staging.stg_raw__orders as o using (order_id)
+      inner join marts.dim_carrier as c using (carrier_code)
+      inner join intermediate.int_shipment_milestones as m using (shipment_id)
+      where m.picked_up_at is not null
+        and c.carrier_code = 'PAKO'
+        and o.service_level = 'express'
+  )
+
+  select
+      cast(date_trunc('month', p.picked_date) as date) as month,
+      sla.sla_hours,
+      count(*) as shipments
+  from picked as p
+  inner join marts.dim_carrier_sla as sla
+      on p.carrier_id = sla.carrier_id
+      and p.service_level = sla.service_level
+      and p.picked_date >= sla.valid_from
+      and p.picked_date < sla.valid_to
+  group by 1, 2
+negatives:
+  # bieżąca wersja SLA zamiast wersji ważnej w dniu odbioru (typowy błąd SCD1-myślenia)
+  - |
+    select cast(date_trunc('month', m.picked_up_at) as date) as month, sla.sla_hours,
+           count(*) as shipments
+    from staging.stg_raw__shipments s
+    join staging.stg_raw__orders o using (order_id)
+    join marts.dim_carrier c using (carrier_code)
+    join intermediate.int_shipment_milestones m using (shipment_id)
+    join marts.dim_carrier_sla sla
+      on sla.carrier_id = c.carrier_id and sla.service_level = o.service_level and sla.is_current
+    where m.picked_up_at is not null and c.carrier_code = 'PAKO' and o.service_level = 'express'
+    group by 1, 2
+  # valid_to traktowane jako włączne: przesyłki z dnia zmiany liczą się dwa razy
+  - |
+    select cast(date_trunc('month', m.picked_up_at) as date) as month, sla.sla_hours,
+           count(*) as shipments
+    from staging.stg_raw__shipments s
+    join staging.stg_raw__orders o using (order_id)
+    join marts.dim_carrier c using (carrier_code)
+    join intermediate.int_shipment_milestones m using (shipment_id)
+    join marts.dim_carrier_sla sla
+      on sla.carrier_id = c.carrier_id and sla.service_level = o.service_level
+     and cast(m.picked_up_at as date) between sla.valid_from and sla.valid_to
+    where m.picked_up_at is not null and c.carrier_code = 'PAKO' and o.service_level = 'express'
+    group by 1, 2

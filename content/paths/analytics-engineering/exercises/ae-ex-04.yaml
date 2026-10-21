@@ -1,0 +1,54 @@
+id: ae-ex-04
+title: On-time rate per przewoźnik i tydzień
+kind: sql
+lesson: ae-02
+topic: ae.dimensional-modeling
+difficulty: 2
+question: |
+  Zbuduj tabelkę do raportu tygodniowego z gwiazdy: `marts.fct_shipments` + `marts.dim_carrier`
+  + `marts.dim_date`.
+
+  Uwzględnij przesyłki **doręczone**, przypisane do tygodnia po dacie doręczenia
+  (`dim_date.week_start` dla `delivered_at`), dla tygodni rozpoczynających się
+  od `2026-04-06` do `2026-04-27` włącznie.
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `carrier_code` | kod przewoźnika |
+  | `week_start` | poniedziałek tygodnia (z `dim_date`) |
+  | `delivered` | liczba doręczonych przesyłek |
+  | `on_time` | ile z nich na czas (`is_on_time`) |
+  | `on_time_rate` | `on_time / delivered` (ułamek 0–1, bez zaokrąglania) |
+hints:
+  - "Join faktu z `dim_date` po `cast(delivered_at as date) = date_day` daje `week_start` bez liczenia dat w zapytaniu."
+  - Filtr na zakres tygodni nałóż na `week_start`, nie na `delivered_at` — wtedy granice tygodni są zawsze pełne.
+  - Wskaźnik licz z licznika i mianownika w tej samej grupie (`count(*) filter (where is_on_time)` / `count(*)`), a nie jako średnią z dziennych wskaźników.
+reference: |
+  select
+      c.carrier_code,
+      d.week_start,
+      count(*) as delivered,
+      count(*) filter (where f.is_on_time) as on_time,
+      count(*) filter (where f.is_on_time) / count(*) as on_time_rate
+  from marts.fct_shipments as f
+  inner join marts.dim_carrier as c using (carrier_id)
+  inner join marts.dim_date as d on d.date_day = cast(f.delivered_at as date)
+  where f.shipment_status = 'delivered'
+    and d.week_start between date '2026-04-06' and date '2026-04-27'
+  group by c.carrier_code, d.week_start
+negatives:
+  # średnia z dziennych wskaźników zamiast licznik / mianownik
+  - |
+    with daily as (
+        select c.carrier_code, d.week_start, d.date_day,
+               count(*) as delivered, count(*) filter (where f.is_on_time) as on_time,
+               avg(f.is_on_time::int) as rate
+        from marts.fct_shipments f join marts.dim_carrier c using (carrier_id)
+        join marts.dim_date d on d.date_day = cast(f.delivered_at as date)
+        where f.shipment_status = 'delivered'
+          and d.week_start between date '2026-04-06' and date '2026-04-27'
+        group by all
+    )
+    select carrier_code, week_start, sum(delivered) as delivered, sum(on_time) as on_time,
+           avg(rate) as on_time_rate
+    from daily group by all

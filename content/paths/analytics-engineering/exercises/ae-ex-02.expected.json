@@ -1,0 +1,11 @@
+{
+  "columns": ["carrier_code", "shipments", "non_canonical", "non_canonical_share"],
+  "types": ["VARCHAR", "BIGINT", "BIGINT", "DOUBLE"],
+  "rows": [
+    ["ECO", 1741, 235, 0.134979896611143],
+    ["NORTH", 3587, 530, 0.14775578477836632],
+    ["PAKO", 5835, 889, 0.15235646958011997],
+    ["RAPID", 2204, 296, 0.13430127041742287],
+    ["SWIFT", 6362, 959, 0.15073876139578749]
+  ]
+}

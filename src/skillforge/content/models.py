@@ -104,6 +104,9 @@ class Exercise(BaseModel):
     hints: list[str] = Field(default_factory=list)
     reference: str
     compare: CompareSpec = Field(default_factory=CompareSpec)
+    # Negative controls: typical wrong answers that MUST fail. Proves the golden set (data +
+    # expected result + compare spec) discriminates right from wrong, not just that it passes.
+    negatives: list[str] = Field(default_factory=list)
     # python only
     function: str | None = None
     starter: str | None = None

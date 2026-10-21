@@ -42,3 +42,14 @@ reference: |
       from unique_events
       group by event_type
   ) as u using (event_type)
+negatives:
+  # unikalność po samym shipment_id — dawało ten sam wynik, dopóki zwroty nie miały 2 prób doręczenia
+  - |
+    select event_type, count(*) as raw_events, count(distinct shipment_id) as unique_events,
+           count(*) - count(distinct shipment_id) as duplicates
+    from raw.shipment_events group by event_type
+  # unikalność po event_id — event_id jest zawsze unikalny, więc duplikatów „nie ma”
+  - |
+    select event_type, count(*) as raw_events, count(distinct event_id) as unique_events,
+           count(*) - count(distinct event_id) as duplicates
+    from raw.shipment_events group by event_type

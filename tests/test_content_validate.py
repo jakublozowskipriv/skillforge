@@ -139,3 +139,16 @@ def test_golden_set_snapshot_and_drift(content: Path, warehouse: Path) -> None:
     ex.expected_path.write_text(json.dumps(data), encoding="utf-8")
     problems = validate_golden_set(content, warehouse)
     assert len(problems) == 1 and "does not match" in problems[0].message
+
+
+@pytest.mark.integration
+def test_negative_controls_must_fail(content: Path, warehouse: Path) -> None:
+    path = content / "paths/test/exercises/t-ex-01.yaml"
+    wrong = "select lower(carrier_code) as carrier_code from marts.dim_carrier"
+    same_as_reference = "select carrier_code from marts.dim_carrier order by 1"
+    path.write_text(
+        EXERCISE + f"negatives:\n  - {wrong}\n  - {same_as_reference}\n", encoding="utf-8"
+    )
+    snapshot_exercise(load_exercise(path), warehouse)
+    problems = validate_golden_set(content, warehouse)
+    assert [p.message.split(" —")[0] for p in problems] == ["negative control #2 passes"]

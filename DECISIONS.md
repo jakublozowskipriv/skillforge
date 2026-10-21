@@ -66,3 +66,8 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · dbt szukany jako `bin/dbt` lub `Scripts/dbt.exe` obok interpretera; ścieżka hurtowni przekazywana z `/` (`as_posix()`); `PYTHONUTF8=1` dla subprocesu dbt · różnice układu venv i kodowania między systemami.
 - 2026-10-21 · CLI: `stdout/stderr.reconfigure(errors="replace")` · na Windows przekierowane wyjście w cp1250/cp1252 nie wywraca komend na znakach `→`/`✓`.
 - 2026-10-21 · Instrukcje uruchomienia w README w dwóch wariantach (PowerShell i bash) · PowerShell 5.1 nie obsługuje `&&`.
+- 2026-10-21 · Ćwiczenia mają `negatives`: typowe błędne odpowiedzi, które walidacja wymaga, by OBLAŁY · golden set musi rozróżniać dobre i złe odpowiedzi; to też fundament pod ocenę agentów (kontrola fałszywych pozytywów).
+- 2026-10-21 · Zmiana SLA Pakomat24 przesunięta z niedzieli 15.03 na wtorek 17.03 · w niedziele nie ma odbiorów, więc błąd „`valid_to` włącznie” był niewykrywalny — złapała to negatywna kontrolka.
+- 2026-10-21 · Generator: ~10% reklamacji ma reklamację ponowną (losowane na końcu, nie zmienia wcześniejszych tabel) · bez tego fan-out przesyłka→reklamacje nie istniał w danych.
+- 2026-10-21 · Pytania w ćwiczeniach nie wymagają zaokrąglania (ułamki 0–1, wartości „bez zaokrąglania”) · porównanie z tolerancją jest pewniejsze niż zgadywanie, czy autor zaokrąglił do 1 czy 2 miejsc.
+- 2026-10-21 · Treść startowa: L1 (2 ćwiczenia), L2 (5, w tym Python), L3 (3); 20 fiszek; tematy ćwiczeń mogą różnić się od tematu lekcji (np. `ae.materializations` w L3) · poziomy w drzewie liczą się per temat, nie per lekcja.

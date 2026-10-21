@@ -1,0 +1,16 @@
+{
+  "columns": ["carrier_code", "shipments"],
+  "types": ["VARCHAR", "BIGINT"],
+  "rows": [
+    ["Eco ", 79],
+    ["North ", 166],
+    ["Pako ", 291],
+    ["Rapid ", 98],
+    ["Swift ", 345],
+    ["eco", 156],
+    ["north", 364],
+    ["pako", 598],
+    ["rapid", 198],
+    ["swift", 614]
+  ]
+}

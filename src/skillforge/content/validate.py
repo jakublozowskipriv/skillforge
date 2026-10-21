@@ -147,17 +147,24 @@ def validate_golden_set(root: Path, warehouse: Path) -> list[Problem]:
         ex = _try_load(path, root, load_exercise, problems)
         if ex is None or (ex.kind == "sql" and not ex.expected_path.exists()):
             continue  # reported by validate_structure
+        where = str(path.relative_to(root))
         case = ex.to_case()
         result = evaluate(case, reference_candidate(case), ctx)
-        if result.passed:
-            continue
-        detail = result.error or "; ".join(result.diff.summary() if result.diff else [])
-        if result.test_results:
-            failed = [t.name for t in result.test_results if not t.passed]
-            detail = f"reference fails tests: {', '.join(failed)}"
-        problems.append(
-            Problem(str(path.relative_to(root)), f"reference does not match expectation: {detail}")
-        )
+        if not result.passed:
+            detail = result.error or "; ".join(result.diff.summary() if result.diff else [])
+            if result.test_results:
+                failed = [t.name for t in result.test_results if not t.passed]
+                detail = f"reference fails tests: {', '.join(failed)}"
+            problems.append(Problem(where, f"reference does not match expectation: {detail}"))
+        for i, negative in enumerate(ex.negatives, start=1):
+            if evaluate(case, negative, ctx).passed:
+                problems.append(
+                    Problem(
+                        where,
+                        f"negative control #{i} passes — the golden set does not discriminate "
+                        "this wrong answer (change the data, the question or the compare spec)",
+                    )
+                )
     return problems
 
 

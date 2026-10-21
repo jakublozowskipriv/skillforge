@@ -1,0 +1,67 @@
+id: ae-ex-07
+title: Klucz surogatowy zgodny z dbt_utils
+kind: python
+lesson: ae-02
+topic: ae.dimensional-modeling
+difficulty: 2
+question: |
+  Napisz funkcję `surrogate_key(*values)`, która daje **ten sam hash** co makro
+  `dbt_utils.generate_surrogate_key` (u nas: `dbt/macros/surrogate_key.sql`):
+
+  1. każdą wartość zamień na tekst (`str(v)`), a `None` na `_dbt_utils_surrogate_key_null_`,
+  2. połącz wartości separatorem `-`,
+  3. zwróć `md5` z wyniku (UTF-8) jako 32-znakowy hex.
+
+  Testy zawierają m.in. klucz prawdziwej wersji SLA z `marts.dim_carrier_sla`
+  (Pakomat24, express, od 2026-03-17) — Twój Python ma się zgadzać z hurtownią.
+  Wartości wejściowe to `int`, `str` albo `None`.
+function: surrogate_key
+starter: |
+  import hashlib
+
+  NULL_PLACEHOLDER = "_dbt_utils_surrogate_key_null_"
+
+
+  def surrogate_key(*values: object) -> str:
+      ...
+hints:
+  - "`hashlib.md5(tekst.encode(\"utf-8\")).hexdigest()` daje hex w tym samym formacie co `md5()` w DuckDB."
+  - Dlaczego placeholder dla NULL? Bez niego `('a', None)` i `(None, 'a')` dałyby ten sam klucz, a w SQL konkatenacja z NULL zwraca NULL.
+reference: |
+  import hashlib
+
+  NULL_PLACEHOLDER = "_dbt_utils_surrogate_key_null_"
+
+
+  def surrogate_key(*values: object) -> str:
+      parts = [NULL_PLACEHOLDER if v is None else str(v) for v in values]
+      return hashlib.md5("-".join(parts).encode("utf-8")).hexdigest()
+tests:
+  - name: wersja SLA z hurtowni (PAKO express od 2026-03-17)
+    args: [3, "express", "2026-03-17"]
+    expected: 0e234df9e580e4fc6854c3506eb65402
+  - name: NorthExpress standard od 2025-01-01
+    args: [2, "standard", "2025-01-01"]
+    expected: e9379684da0e2e09163f69f4da537ffe
+  - name: jedna wartość
+    args: ["SWIFT"]
+    expected: 6a057610781388923bebe37a329c92c9
+  - name: NULL na początku
+    args: [null, "a"]
+    expected: 6da753bc235347d4d3f4ac3b0f56d9e7
+  - name: NULL na końcu (inny klucz niż na początku)
+    args: ["a", null]
+    expected: 6231b1e7ffe3b9d15edc44e40e6f694c
+  - name: same NULL-e
+    args: [null, null]
+    expected: 92fd475bc0821b474d4c2da142257152
+  - name: polskie znaki (UTF-8)
+    args: ["Łódź", 7]
+    expected: 3443e2c3963f4223daf134808fba6a8d
+negatives:
+  # NULL jako pusty string — ('a', None) i (None, 'a') przestają się różnić od innych kluczy
+  - |
+    import hashlib
+
+    def surrogate_key(*values):
+        return hashlib.md5("-".join("" if v is None else str(v) for v in values).encode()).hexdigest()

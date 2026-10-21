@@ -1,0 +1,40 @@
+id: ae-ex-03
+title: Znajdź fan-out po JOIN-ie z reklamacjami
+kind: sql
+lesson: ae-02
+topic: ae.dimensional-modeling
+difficulty: 2
+question: |
+  Kolega chce policzyć koszt wysyłki przesyłek z reklamacjami i pisze:
+
+  ```sql
+  select sum(s.shipping_cost_pln)
+  from marts.fct_shipments s
+  join staging.stg_raw__complaints c using (shipment_id)
+  ```
+
+  Grain `fct_shipments` to jedna przesyłka, ale reklamacji na przesyłkę może być więcej niż jedna.
+  Znajdź przesyłki, które po tym JOIN-ie występują **więcej niż raz**:
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `shipment_id` | id przesyłki |
+  | `rows_after_join` | ile wierszy daje po JOIN-ie |
+hints:
+  - Zbuduj ten sam JOIN i pogrupuj po kluczu grainu faktu (`shipment_id`).
+  - Wiersze z `count(*) > 1` to fan-out — odfiltruj je przez `having`.
+  - "Jak naprawić zapytanie kolegi? Najpierw zagreguj reklamacje do grainu przesyłki (albo użyj `where exists`), dopiero potem łącz."
+reference: |
+  select
+      s.shipment_id,
+      count(*) as rows_after_join
+  from marts.fct_shipments as s
+  inner join staging.stg_raw__complaints as c using (shipment_id)
+  group by s.shipment_id
+  having count(*) > 1
+negatives:
+  # wszystkie przesyłki z reklamacją, a nie tylko zdublowane
+  - |
+    select s.shipment_id, count(*) as rows_after_join
+    from marts.fct_shipments s join staging.stg_raw__complaints c using (shipment_id)
+    group by s.shipment_id

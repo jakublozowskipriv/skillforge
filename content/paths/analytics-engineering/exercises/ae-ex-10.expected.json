@@ -1,0 +1,11 @@
+{
+  "columns": ["carrier_code", "delivered_shipments", "complaints", "complaints_per_1000"],
+  "types": ["VARCHAR", "BIGINT", "BIGINT", "DOUBLE"],
+  "rows": [
+    ["ECO", 1691, 71, 41.98698994677706],
+    ["NORTH", 3513, 95, 27.04241389126103],
+    ["PAKO", 5692, 133, 23.366127898805342],
+    ["RAPID", 2151, 88, 40.91120409112041],
+    ["SWIFT", 6221, 145, 23.30814981514226]
+  ]
+}
