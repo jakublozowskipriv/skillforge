@@ -9,6 +9,7 @@ import streamlit as st
 
 from skillforge.evaluator import EvalResult
 from skillforge.evaluator.resultset import Row
+from skillforge.text import pl_plural
 
 
 def rows_df(columns: Sequence[str], rows: Sequence[Row]) -> pd.DataFrame:
@@ -93,7 +94,7 @@ def render_eval_result(result: EvalResult) -> None:
                 st.dataframe(rows_df(cols, rows), hide_index=True, width="stretch")
     with containers["Twój wynik"]:
         if result.actual is not None:
-            st.caption(f"{result.actual.row_count} wierszy")
+            st.caption(pl_plural(result.actual.row_count, "wiersz", "wiersze", "wierszy"))
             st.dataframe(
                 rows_df(result.actual.columns, result.actual.rows[:200]),
                 hide_index=True,

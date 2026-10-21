@@ -81,3 +81,4 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · `/next-lesson`: wybór tematu deterministycznym przepisem (priorytet ścieżki → najniższy poziom → najmniej lekcji, słabe wyniki mają pierwszeństwo, bez dwóch lekcji z rzędu o tym samym temacie); każde ćwiczenie ≥ 1 negatywna kontrolka · powtarzalne decyzje tutora, jakość golden setu.
 - 2026-10-21 · CLI `skillforge check <id> <plik>` i `skillforge data schema` · tutor w `/review` eksperymentuje bez zapisu prób; użytkownik może pracować w edytorze zamiast w UI.
 - 2026-10-21 · `/weekly-review` zapisuje raport do `var/reviews/` i nie wymyśla liczb do brag doca · raport prywatny; wpis do brag doca dodaje użytkownik po potwierdzeniu.
+- 2026-10-21 · Odmiana liczebników w UI przez `pl_plural` (1 wiersz / 2 wiersze / 5 wierszy) · „1 wierszy” widoczne na zrzucie ekranu.

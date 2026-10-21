@@ -14,19 +14,15 @@ portfolio i jednocześnie narzędzie, którego używam do własnego rozwoju.
 
 ## Zrzuty ekranu
 
-<!--
-Zrzuty robię ręcznie (Playwright → ROADMAP). Po dodaniu plików do docs/img/ odkomentuj:
-
-| Dashboard | Ćwiczenie z diffem |
+| Dashboard: rytm tygodnia, fiszki na dziś, KPI | Ćwiczenie: czytelny diff wyniku |
 |---|---|
-| ![Dashboard](docs/img/dashboard.png) | ![Ćwiczenie](docs/img/exercise-diff.png) |
+| ![Dashboard](docs/img/dashboard.png) | ![Ćwiczenie z diffem](docs/img/exercise-diff.png) |
 
-| Fiszki (FSRS) | Lekcja offline na telefonie |
-|---|---|
-| ![Fiszki](docs/img/flashcards.png) | ![Telefon](docs/img/phone-offline.png) |
--->
+![Fiszki z powtórkami FSRS](docs/img/flashcards.png)
 
-*Zrzuty ekranu w przygotowaniu (`docs/img/`).*
+<!-- Po pierwszym deployu GitHub Pages: docs/img/phone-offline.png (lekcja offline na telefonie). -->
+
+*Zrzuty z trybu demo: przykładowy profil (`profile.example.yaml`) i dane fikcyjne.*
 
 ## Architektura
 
