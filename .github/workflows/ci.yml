@@ -21,6 +21,8 @@ jobs:
         run: uv run ruff format --check .
       - name: Types
         run: uv run mypy
+      - name: Static site (strict)
+        run: uv run skillforge site build
 
   test:
     strategy:

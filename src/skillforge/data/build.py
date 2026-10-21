@@ -4,26 +4,17 @@ from __future__ import annotations
 
 import os
 import subprocess
-import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from skillforge import paths
 from skillforge.data.generate import DEFAULT_SEED, generate, load_raw
+from skillforge.venv import executable
 
 
 def dbt_executable() -> str:
-    """The ``dbt`` CLI installed in the same environment as this interpreter.
-
-    venv layout differs per OS: ``.venv/bin/dbt`` (Linux/macOS), ``.venv\\Scripts\\dbt.exe``
-    (Windows). Falls back to whatever ``dbt`` is on PATH.
-    """
-    bin_dir = Path(sys.executable).parent
-    for name in ("dbt", "dbt.exe"):
-        candidate = bin_dir / name
-        if candidate.exists():
-            return str(candidate)
-    return "dbt"
+    """The ``dbt`` CLI installed in the same environment as this interpreter."""
+    return executable("dbt")
 
 
 def run_dbt(args: Sequence[str], warehouse: Path, *, quiet: bool = False) -> int:

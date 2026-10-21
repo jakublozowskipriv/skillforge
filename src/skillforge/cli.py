@@ -28,6 +28,8 @@ progress_app = typer.Typer(
     help="Your progress (event log in var/progress.db).", no_args_is_help=True
 )
 app.add_typer(progress_app, name="progress")
+site_app = typer.Typer(help="Static lesson site for the phone (MkDocs).", no_args_is_help=True)
+app.add_typer(site_app, name="site")
 
 SeedOpt = Annotated[int, typer.Option(help="Random seed (dataset is deterministic per seed).")]
 ScaleOpt = Annotated[float, typer.Option(help="Volume multiplier; 1.0 ≈ 19k orders.")]
@@ -207,6 +209,82 @@ def progress_brag(
         typer.echo(f"→ {out}")
     else:
         typer.echo(text)
+
+
+@site_app.command("build")
+def site_build(
+    serve: Annotated[bool, typer.Option(help="Serve locally with live reload instead.")] = False,
+) -> None:
+    """Generate pages from content/ and build the offline-capable site into build/site."""
+    import subprocess
+
+    from skillforge.content.loader import load_content
+    from skillforge.site.generate import write_docs
+    from skillforge.venv import executable
+
+    pages = write_docs(load_content(), paths.BUILD_DIR / "site_docs", paths.SITE_DIR / "assets")
+    typer.echo(f"{len(pages)} pages generated")
+    config = str(paths.SITE_DIR / "mkdocs.yml")
+    cmd = [executable("mkdocs"), "serve" if serve else "build", "-f", config]
+    if not serve:
+        cmd.append("--strict")
+    code = subprocess.run(cmd, cwd=paths.REPO_ROOT, check=False).returncode
+    if code != 0:
+        raise typer.Exit(code)
+    if not serve:
+        typer.secho(f"Site ready → {paths.BUILD_DIR / 'site'}", fg=typer.colors.GREEN)
+
+
+def _lan_addresses() -> list[str]:
+    """Best-effort local IPv4 addresses (LAN and Tailscale 100.x), without external calls."""
+    import socket
+
+    found: set[str] = set()
+    try:
+        for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+            found.add(str(info[4][0]))
+    except OSError:
+        pass
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        try:
+            s.connect(("192.0.2.1", 9))  # TEST-NET address: no packet is sent for UDP connect
+            found.add(s.getsockname()[0])
+        except OSError:
+            pass
+    return sorted(ip for ip in found if not ip.startswith("127."))
+
+
+@app.command()
+def serve(
+    lan: Annotated[
+        bool, typer.Option("--lan", help="Listen on all interfaces (phone via Wi-Fi/Tailscale).")
+    ] = False,
+    port: Annotated[int, typer.Option(help="Port.")] = 8501,
+) -> None:
+    """Run the app. With --lan it is reachable from other devices — see README (Tailscale)."""
+    import subprocess
+
+    address = "0.0.0.0" if lan else "localhost"
+    if lan:
+        typer.secho(
+            "Uwaga: aplikacja nie ma logowania. Udostępniaj ją tylko w zaufanej sieci "
+            "albo przez Tailscale.",
+            fg=typer.colors.YELLOW,
+        )
+        for ip in _lan_addresses():
+            typer.echo(f"  → http://{ip}:{port}")
+    cmd = [
+        sys.executable,
+        "-m",
+        "streamlit",
+        "run",
+        str(paths.REPO_ROOT / "app.py"),
+        "--server.address",
+        address,
+        "--server.port",
+        str(port),
+    ]
+    raise typer.Exit(subprocess.run(cmd, cwd=paths.REPO_ROOT, check=False).returncode)
 
 
 if __name__ == "__main__":

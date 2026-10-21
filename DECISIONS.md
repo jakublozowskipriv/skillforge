@@ -71,3 +71,9 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Generator: ~10% reklamacji ma reklamację ponowną (losowane na końcu, nie zmienia wcześniejszych tabel) · bez tego fan-out przesyłka→reklamacje nie istniał w danych.
 - 2026-10-21 · Pytania w ćwiczeniach nie wymagają zaokrąglania (ułamki 0–1, wartości „bez zaokrąglania”) · porównanie z tolerancją jest pewniejsze niż zgadywanie, czy autor zaokrąglił do 1 czy 2 miejsc.
 - 2026-10-21 · Treść startowa: L1 (2 ćwiczenia), L2 (5, w tym Python), L3 (3); 20 fiszek; tematy ćwiczeń mogą różnić się od tematu lekcji (np. `ae.materializations` w L3) · poziomy w drzewie liczą się per temat, nie per lekcja.
+- 2026-10-21 · Strona lekcji: `content/` → Markdown (`skillforge site build`) → MkDocs Material z `--strict`; zadania z podpowiedziami i rozwiązaniem w rozwijanych blokach, fiszki jako pytania do kliknięcia · nauka z telefonu przy wyłączonym PC; sprawdzanie i FSRS zostają w aplikacji (PWA w etapie 2).
+- 2026-10-21 · Offline: service worker generowany hookiem `on_post_build` z listy faktycznie zbudowanych plików, cache wersjonowany hashem treści, strategia cache-first + fallback nawigacji · prosto, deterministycznie, bez dodatkowych wtyczek.
+- 2026-10-21 · `mkdocs<2` przypięty; grupa zależności `site` w `default-groups` · MkDocs 2.0 usuwa wtyczki i system motywów; `uv sync` instaluje wszystko jedną komendą.
+- 2026-10-21 · Ikony PWA wygenerowane czystym Pythonem (PNG 192/512 + SVG) · bez zależności graficznych; Android wymaga PNG do instalacji.
+- 2026-10-21 · Pages deploy tylko z `main` (osobny workflow), a build strony `--strict` w CI na każdym pushu · na stronę trafia wyłącznie zmergowana, publiczna treść.
+- 2026-10-21 · Telefon → pełna aplikacja: zalecany `tailscale serve` (HTTPS w tailnecie, aplikacja dalej na localhost); `serve --lan` jako wariant prosty z ostrzeżeniem o braku logowania · bez wystawiania do internetu.

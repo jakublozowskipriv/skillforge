@@ -29,6 +29,10 @@ dev = [
     "ruff>=0.11",
     "types-PyYAML>=6.0",
 ]
+site = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.7.7",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -58,3 +62,6 @@ addopts = "-ra"
 markers = [
     "integration: needs the generated warehouse (slower)",
 ]
+
+[tool.uv]
+default-groups = ["dev", "site"]

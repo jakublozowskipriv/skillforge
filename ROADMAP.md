@@ -19,6 +19,7 @@ Wszystko, co nie mieści się w MVP (1–2 weekendy), ląduje tutaj — nie w ko
 - [ ] Ścieżka opcjonalna: prognozowanie szeregów czasowych, podstawy ML.
 
 ## Aplikacja
+- [ ] Migracja strony z MkDocs 1.x na Zensical (następca Material; MkDocs 2.0 łamie wtyczki i nadpisania motywu — dlatego `mkdocs<2`).
 - [ ] Eksport CV / brag doca (szablony pod rekrutację).
 - [ ] Edytor kodu z podświetlaniem składni w UI.
 - [ ] Optymalizacja parametrów FSRS na własnej historii powtórek.

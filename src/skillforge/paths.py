@@ -12,6 +12,8 @@ REPO_ROOT = Path(os.environ.get("SKILLFORGE_ROOT", Path(__file__).resolve().pare
 VAR_DIR = Path(os.environ.get("SKILLFORGE_VAR", REPO_ROOT / "var"))
 CONTENT_DIR = REPO_ROOT / "content"
 DBT_DIR = REPO_ROOT / "dbt"
+SITE_DIR = REPO_ROOT / "site"  # mkdocs.yml, hooks, assets (committed)
+BUILD_DIR = REPO_ROOT / "build"  # generated site docs and output (gitignored)
 
 WAREHOUSE_PATH = VAR_DIR / "warehouse.duckdb"
 PROGRESS_DB_PATH = VAR_DIR / "progress.db"
