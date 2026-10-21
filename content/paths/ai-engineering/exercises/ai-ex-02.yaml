@@ -1,0 +1,66 @@
+id: ai-ex-02
+title: Regresja między dwoma runami ewaluacji
+kind: python
+lesson: ai-01
+topic: ai.llm-evals
+difficulty: 2
+question: |
+  Masz wyniki dwóch runów na tym samym golden secie: `baseline` (obecna wersja agenta)
+  i `candidate` (nowy prompt). Każdy to lista `{"case_id": str, "passed": bool}` — kolejność
+  w listach może się różnić.
+
+  Napisz `regressions(baseline, candidate)`, która zwraca słownik z **posortowanymi** listami id:
+
+  | klucz | znaczenie |
+  |---|---|
+  | `broken` | zaliczone w baseline, niezaliczone w candidate |
+  | `fixed` | niezaliczone w baseline, zaliczone w candidate |
+  | `missing` | są w baseline, brak w candidate |
+  | `new` | są w candidate, brak w baseline |
+function: regressions
+starter: |
+  def regressions(baseline: list[dict], candidate: list[dict]) -> dict[str, list[str]]:
+      ...
+hints:
+  - Zamień oba runy na słowniki `case_id → passed`, wtedy kolejność list przestaje mieć znaczenie.
+  - "`broken` i `fixed` licz tylko dla id obecnych w obu runach."
+  - Nie zapomnij posortować wynikowych list.
+reference: |
+  def regressions(baseline: list[dict], candidate: list[dict]) -> dict[str, list[str]]:
+      base = {r["case_id"]: r["passed"] for r in baseline}
+      cand = {r["case_id"]: r["passed"] for r in candidate}
+      common = base.keys() & cand.keys()
+      return {
+          "broken": sorted(c for c in common if base[c] and not cand[c]),
+          "fixed": sorted(c for c in common if not base[c] and cand[c]),
+          "missing": sorted(base.keys() - cand.keys()),
+          "new": sorted(cand.keys() - base.keys()),
+      }
+tests:
+  - name: różna kolejność, wszystkie kategorie
+    args:
+      - - { case_id: q1, passed: true }
+        - { case_id: q2, passed: false }
+        - { case_id: q3, passed: true }
+        - { case_id: q4, passed: true }
+      - - { case_id: q4, passed: true }
+        - { case_id: q3, passed: false }
+        - { case_id: q2, passed: true }
+        - { case_id: q5, passed: false }
+    expected: { broken: [q3], fixed: [q2], missing: [q1], new: [q5] }
+  - name: identyczne runy
+    args:
+      - [{ case_id: a, passed: true }, { case_id: b, passed: false }]
+      - [{ case_id: b, passed: false }, { case_id: a, passed: true }]
+    expected: { broken: [], fixed: [], missing: [], new: [] }
+negatives:
+  # porównanie po pozycji w liście zamiast po case_id
+  - |
+    def regressions(baseline, candidate):
+        out = {"broken": [], "fixed": [], "missing": [], "new": []}
+        for b, c in zip(baseline, candidate):
+            if b["passed"] and not c["passed"]:
+                out["broken"].append(b["case_id"])
+            if not b["passed"] and c["passed"]:
+                out["fixed"].append(b["case_id"])
+        return {k: sorted(v) for k, v in out.items()}

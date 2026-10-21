@@ -1,0 +1,89 @@
+id: ai-ex-03
+title: Porównanie wyników bez kolejności, z tolerancją i duplikatami
+kind: python
+lesson: ai-01
+topic: ai.llm-evals
+difficulty: 2
+question: |
+  Serce execution accuracy: czy dwa wyniki zapytań są „takie same”? Napisz
+  `results_match(expected, actual, rel_tol=1e-6)`, gdzie `expected` i `actual` to listy wierszy
+  (listy wartości). Zwróć `True`, gdy:
+
+  - zawierają te same wiersze **niezależnie od kolejności**,
+  - z **duplikatami** (wiersz zwrócony 2× to nie to samo, co 1× — fan-out!),
+  - liczby zmiennoprzecinkowe są równe z tolerancją względną `rel_tol` (`math.isclose`),
+  - pozostałe wartości (tekst, int, `None`) — równe dokładnie.
+function: results_match
+starter: |
+  import math
+
+
+  def results_match(expected: list[list], actual: list[list], rel_tol: float = 1e-6) -> bool:
+      ...
+hints:
+  - "Najpierw szybki warunek: różna liczba wierszy ⇒ `False`."
+  - "Dla każdego wiersza `expected` znajdź **i usuń** pasujący wiersz z kopii `actual` — usuwanie załatwia duplikaty."
+  - "Sortowanie i `set` nie wystarczą: `set` gubi duplikaty, a sortowanie floatów z tolerancją bywa zdradliwe."
+reference: |
+  import math
+
+
+  def _cell_eq(a: object, b: object, rel_tol: float) -> bool:
+      if isinstance(a, float) or isinstance(b, float):
+          return (
+              isinstance(a, (int, float))
+              and isinstance(b, (int, float))
+              and math.isclose(a, b, rel_tol=rel_tol)
+          )
+      return a == b
+
+
+  def results_match(expected: list[list], actual: list[list], rel_tol: float = 1e-6) -> bool:
+      if len(expected) != len(actual):
+          return False
+      remaining = [list(row) for row in actual]
+      for row in expected:
+          for i, candidate in enumerate(remaining):
+              if len(candidate) == len(row) and all(
+                  _cell_eq(x, y, rel_tol) for x, y in zip(row, candidate)
+              ):
+                  del remaining[i]
+                  break
+          else:
+              return False
+      return True
+tests:
+  - name: inna kolejność wierszy
+    args: [[["SWIFT", 10], ["PAKO", 5]], [["PAKO", 5], ["SWIFT", 10]]]
+    expected: true
+  - name: float w tolerancji
+    args: [[["SWIFT", 0.8]], [["SWIFT", 0.8000000001]]]
+    expected: true
+  - name: float poza tolerancją
+    args: [[["SWIFT", 0.8]], [["SWIFT", 0.81]]]
+    expected: false
+  - name: duplikat zamiast innego wiersza
+    args: [[["SWIFT", 10], ["PAKO", 5]], [["SWIFT", 10], ["SWIFT", 10]]]
+    expected: false
+  - name: duplikaty po obu stronach
+    args: [[["a", 1], ["a", 1], ["b", 2]], [["b", 2], ["a", 1], ["a", 1]]]
+    expected: true
+  - name: brakujący wiersz
+    args: [[["a", 1], ["b", 2]], [["a", 1]]]
+    expected: false
+  - name: NULL-e
+    args: [[[null, 1]], [[null, 1]]]
+    expected: true
+  - name: własna tolerancja
+    kwargs: { expected: [["x", 100.0]], actual: [["x", 101.0]], rel_tol: 0.02 }
+    expected: true
+negatives:
+  # zbiory gubią duplikaty
+  - |
+    def results_match(expected, actual, rel_tol=1e-6):
+        return {tuple(r) for r in expected} == {tuple(r) for r in actual}
+  # dokładna równość po sortowaniu — bez tolerancji
+  - |
+    def results_match(expected, actual, rel_tol=1e-6):
+        key = lambda r: [str(v) for v in r]
+        return sorted(expected, key=key) == sorted(actual, key=key)

@@ -1,0 +1,72 @@
+id: ai-ex-05
+title: Przedział ufności Wilsona dla execution accuracy
+kind: python
+lesson: ai-01
+topic: ai.llm-evals
+difficulty: 3
+question: |
+  Agent zaliczył `passed` z `total` pytań golden setu. Napisz `wilson_interval(passed, total, z=1.96)`
+  zwracającą `[dolna, górna]` granicę 95% przedziału Wilsona dla odsetka trafień:
+
+  ```
+  p      = passed / total
+  denom  = 1 + z² / total
+  center = (p + z² / (2·total)) / denom
+  half   = z · sqrt(p·(1−p)/total + z² / (4·total²)) / denom
+  wynik  = [max(0, center − half), min(1, center + half)]
+  ```
+
+  Dla `total == 0` zwróć `[0.0, 1.0]` (brak danych = pełna niepewność).
+  Dlaczego nie prosty przedział `p ± z·sqrt(p(1−p)/n)` (Wald)? Dla 0/10 dałby `[0, 0]` —
+  „na pewno 0%”, co jest absurdem przy 10 pytaniach.
+function: wilson_interval
+starter: |
+  import math
+
+
+  def wilson_interval(passed: int, total: int, z: float = 1.96) -> list[float]:
+      ...
+hints:
+  - Przepisz wzór 1:1, używając `math.sqrt`; najpierw obsłuż `total == 0`.
+  - "Sprawdź intuicję: 26/30 → ok. [0.70, 0.95]; 25/30 → ok. [0.66, 0.93]. Przedziały się pokrywają, więc różnica jednego pytania to szum."
+reference: |
+  import math
+
+
+  def wilson_interval(passed: int, total: int, z: float = 1.96) -> list[float]:
+      if total == 0:
+          return [0.0, 1.0]
+      p = passed / total
+      denom = 1 + z * z / total
+      center = (p + z * z / (2 * total)) / denom
+      half = z * math.sqrt(p * (1 - p) / total + z * z / (4 * total * total)) / denom
+      return [max(0.0, center - half), min(1.0, center + half)]
+compare:
+  abs_tol: 1.0e-9
+tests:
+  - name: 26 z 30
+    args: [26, 30]
+    expected: [0.7031831605558306, 0.9469043057578189]
+  - name: 25 z 30
+    args: [25, 30]
+    expected: [0.6643529481431982, 0.9266356575964831]
+  - name: 0 z 10 (Wald dałby [0, 0])
+    args: [0, 10]
+    expected: [0.0, 0.2775401687666166]
+  - name: 10 z 10
+    args: [10, 10]
+    expected: [0.7224598312333834, 1.0]
+  - name: brak danych
+    args: [0, 0]
+    expected: [0.0, 1.0]
+negatives:
+  # przedział Walda
+  - |
+    import math
+
+    def wilson_interval(passed, total, z=1.96):
+        if total == 0:
+            return [0.0, 1.0]
+        p = passed / total
+        half = z * math.sqrt(p * (1 - p) / total)
+        return [max(0.0, p - half), min(1.0, p + half)]

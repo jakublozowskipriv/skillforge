@@ -1,0 +1,39 @@
+cards:
+  # --- ai-01: ewaluacja LLM ---------------------------------------------------------------
+  - id: ai-c-01
+    topic: ai.llm-evals
+    lesson: ai-01
+    front: Z czego składa się jeden przypadek golden setu dla text-to-SQL?
+    back: |
+      Pytanie, zapytanie referencyjne, **zamrożony** oczekiwany wynik, reguły porównania
+      (kolejność, tolerancja) i tagi (np. `join`, `time`, `scd2`).
+  - id: ai-c-02
+    topic: ai.llm-evals
+    lesson: ai-01
+    front: Czym jest execution accuracy i czym różni się od exact match?
+    back: |
+      EX = odsetek pytań, w których **wynik** zapytania agenta jest taki sam jak wynik referencji.
+      Exact match porównuje tekst SQL — karze poprawne, ale inaczej napisane zapytania.
+  - id: ai-c-03
+    topic: ai.llm-evals
+    lesson: ai-01
+    front: Po co golden setowi negatywne kontrolki?
+    back: |
+      Zły SQL może dać dobry wynik na konkretnych danych (fałszywy pozytyw). Negatywna kontrolka
+      to typowy błąd, który musi oblać — dowód, że dane i pytanie rozróżniają dobre i złe odpowiedzi.
+  - id: ai-c-04
+    topic: ai.llm-evals
+    lesson: ai-01
+    front: Na co patrzeć przy porównaniu dwóch wersji agenta oprócz średniej?
+    back: |
+      Na przypadki **broken** (pass → fail), **fixed** (fail → pass) i zmiany w składzie
+      golden setu (missing/new) oraz accuracy per tag. Regresje na ważnych pytaniach blokują
+      wdrożenie, nawet gdy średnia rośnie.
+  - id: ai-c-05
+    topic: ai.llm-evals
+    lesson: ai-01
+    front: Dlaczego przy małym golden secie raportujesz przedział Wilsona, a nie samą accuracy?
+    back: |
+      Na 30 pytaniach 26/30 i 25/30 mają niemal pokrywające się przedziały (~70–95% vs ~66–93%) —
+      różnica jednego pytania to szum. Wilson działa też przy 0% i 100%, gdzie przedział Walda
+      zapada się do punktu.
