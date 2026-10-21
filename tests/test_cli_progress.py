@@ -58,3 +58,24 @@ def test_data_schema(warehouse: Path) -> None:
     out = invoke("data", "schema", "marts", "--warehouse", str(warehouse))
     assert "marts.fct_shipments: shipment_id bigint" in out
     assert "raw." not in out
+
+
+@pytest.mark.integration
+def test_sql_explore(tmp_path: Path, warehouse: Path) -> None:
+    from skillforge import paths
+
+    out = invoke(
+        "sql",
+        "select carrier_code from marts.dim_carrier order by 1",
+        "--warehouse",
+        str(warehouse),
+    )
+    assert "ECO" in out and "5 rows" in out
+    query = tmp_path / "q.sql"
+    query.write_text("select * from range(100)", encoding="utf-8")
+    out = invoke("sql", "--file", str(query), "--limit", "5", "--warehouse", str(warehouse))
+    assert "5 rows (more rows available" in out
+    bad = runner.invoke(app, ["sql", "select nope", "--warehouse", str(warehouse)])
+    assert bad.exit_code == 1
+    assert runner.invoke(app, ["sql"]).exit_code == 2
+    assert not paths.PROGRESS_DB_PATH.exists()  # exploring never records anything

@@ -5,8 +5,8 @@ lesson: ae-02
 topic: ae.dimensional-modeling
 difficulty: 2
 question: |
-  Zbuduj tabelkę do raportu tygodniowego z gwiazdy: `marts.fct_shipments` + `marts.dim_carrier`
-  + `marts.dim_date`.
+  Zbuduj tabelkę do raportu tygodniowego z gwiazdy:
+  `marts.fct_shipments`, `marts.dim_carrier` i `marts.dim_date`.
 
   Uwzględnij przesyłki **doręczone**, przypisane do tygodnia po dacie doręczenia
   (`dim_date.week_start` dla `delivered_at`), dla tygodni rozpoczynających się

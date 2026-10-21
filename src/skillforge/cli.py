@@ -100,6 +100,33 @@ def data_schema(
 
 
 @app.command()
+def sql(
+    query: Annotated[str | None, typer.Argument(help="SQL query (or use --file).")] = None,
+    file: Annotated[Path | None, typer.Option(help="Read the query from a file.")] = None,
+    limit: Annotated[int, typer.Option(help="Max rows to print.")] = 50,
+    warehouse: WarehouseOpt = paths.WAREHOUSE_PATH,
+) -> None:
+    """Explore the warehouse: run a read-only query and print the result (nothing is recorded)."""
+    import pandas as pd
+
+    from skillforge.evaluator.sql_runner import SqlExecutionError, run_sql
+
+    if (query is None) == (file is None):
+        typer.secho("Give a query or --file (exactly one).", fg="red", err=True)
+        raise typer.Exit(2)
+    text = file.read_text(encoding="utf-8") if file else str(query)
+    try:
+        result = run_sql(text, warehouse, max_rows=limit)
+    except SqlExecutionError as exc:
+        typer.secho(str(exc), fg="red", err=True)
+        raise typer.Exit(1) from exc
+    frame = pd.DataFrame([list(r) for r in result.rows], columns=list(result.columns))
+    typer.echo(frame.to_string(index=False) if result.rows else ", ".join(result.columns))
+    more = " (more rows available, raise --limit)" if result.truncated else ""
+    typer.echo(f"\n{result.row_count} rows{more}")
+
+
+@app.command()
 def check(
     exercise_id: Annotated[str, typer.Argument(help="Exercise id, e.g. ae-ex-04.")],
     file: Annotated[Path, typer.Argument(help="File with your SQL query / Python code.")],

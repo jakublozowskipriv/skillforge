@@ -1,4 +1,4 @@
-"""Exercise page: question, editor, check, readable diff, hints, attempt history."""
+"""Exercise page: question, editor, explore (run) and check, readable diff, hints, history."""
 
 from __future__ import annotations
 
@@ -9,12 +9,15 @@ import streamlit as st
 
 from skillforge import paths, warehouse
 from skillforge.content.models import Exercise
-from skillforge.evaluator import EvalContext, EvalResult, evaluate
+from skillforge.evaluator import EvalContext, EvalResult, ResultSet, evaluate
+from skillforge.evaluator.sql_runner import SqlExecutionError, run_sql
 from skillforge.progress.projections import ExerciseStats
+from skillforge.text import pl_plural
 from skillforge.ui import nav, state
-from skillforge.ui.components import render_eval_result
+from skillforge.ui.components import render_eval_result, rows_df
 
 DIFFICULTY = {1: "●○○ łatwe", 2: "●●○ średnie", 3: "●●● trudne"}
+EXPLORE_MAX_ROWS = 1_000
 
 
 @st.cache_data(show_spinner=False)
@@ -43,6 +46,31 @@ def _render_hints(ex: Exercise) -> None:
     ):
         st.session_state[key] = shown + 1
         st.rerun()
+
+
+def _explore(code: str, wh: Path) -> ResultSet | str:
+    """Run a query for exploration only: read-only, nothing compared, nothing recorded."""
+    try:
+        return run_sql(code, wh, max_rows=EXPLORE_MAX_ROWS)
+    except SqlExecutionError as exc:
+        return str(exc)
+
+
+def _render_explore(outcome: ResultSet | str | None) -> None:
+    if outcome is None:
+        return
+    with st.container(border=True):
+        st.caption("Podgląd wyniku · nie jest sprawdzany ani zapisywany jako próba")
+        if isinstance(outcome, str):
+            st.error(f"**Błąd wykonania**\n\n```\n{outcome}\n```")
+            return
+        count = pl_plural(outcome.row_count, "wiersz", "wiersze", "wierszy")
+        if outcome.truncated:
+            count = f"pierwsze {count} (wynik obcięty)"
+        st.caption(count)
+        st.dataframe(
+            rows_df(outcome.columns, outcome.rows), hide_index=True, width="stretch", height=320
+        )
 
 
 def _status_icon(stats: ExerciseStats | None) -> str:
@@ -107,11 +135,22 @@ def render() -> None:
     default = ex.starter or ("-- Twoje zapytanie\nselect\n" if ex.kind == "sql" else "")
     code = st.text_area("Twoje rozwiązanie", value=default, height=240, key=f"code:{ex.id}")
     result_key = f"result:{ex.id}"
-    if st.button("▶ Sprawdź", type="primary", key=f"check:{ex.id}"):
+    explore_key = f"explore:{ex.id}"
+    check_col, run_col, _ = st.columns([1, 1, 4])
+    if check_col.button("▶ Sprawdź", type="primary", key=f"check:{ex.id}", width="stretch"):
         with st.spinner("Uruchamiam i porównuję z golden setem…"):
             outcome = evaluate(ex.to_case(), code, EvalContext(wh))
         st.session_state[result_key] = outcome
         state.progress().record_attempt(ex.id, code, outcome)
+    if ex.kind == "sql" and run_col.button(
+        "▷ Uruchom",
+        key=f"run:{ex.id}",
+        width="stretch",
+        help="Podgląd wyniku zapytania: bez porównania z oczekiwanym i bez zapisu próby.",
+    ):
+        st.session_state[explore_key] = _explore(code, wh)
+    if ex.kind == "sql":
+        _render_explore(st.session_state.get(explore_key))
 
     _render_history(ex)
     result: EvalResult | None = st.session_state.get(result_key)
