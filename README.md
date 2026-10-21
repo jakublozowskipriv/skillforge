@@ -205,6 +205,7 @@ zbiorów zdarzeń — bez konfliktów.
 |---|---|
 | `uv run skillforge data build` | generuje syntetyczny dataset i buduje hurtownię dbt (z testami) |
 | `uv run skillforge data schema [marts]` | lista tabel i kolumn hurtowni |
+| `uv run skillforge sql "select ..."` | eksploracja hurtowni: wynik zapytania w terminalu (tylko odczyt, nic się nie zapisuje; też `--file`) |
 | `uv run skillforge check <id> <plik>` | sprawdza rozwiązanie z pliku (np. z edytora) |
 | `uv run skillforge content validate` | sprawdza treści i golden set (referencje + negatywne kontrolki) |
 | `uv run skillforge progress export` | zapisuje postęp do `var/progress.json` (czyta go tutor) |

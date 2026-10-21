@@ -108,4 +108,4 @@ fixture `warehouse` (mała hurtownia, scale 0.05).
 
 `/next-lesson`, `/review <id>`, `/quiz <temat>`, `/weekly-review` — definicje w `.claude/commands/`.
 Komunikują się z danymi wyłącznie przez CLI `skillforge` (`progress export|summary|attempts|record-quiz`,
-`check`, `data schema`, `content snapshot|validate`).
+`check`, `sql`, `data schema`, `content snapshot|validate`).

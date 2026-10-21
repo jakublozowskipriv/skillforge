@@ -82,3 +82,4 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · CLI `skillforge check <id> <plik>` i `skillforge data schema` · tutor w `/review` eksperymentuje bez zapisu prób; użytkownik może pracować w edytorze zamiast w UI.
 - 2026-10-21 · `/weekly-review` zapisuje raport do `var/reviews/` i nie wymyśla liczb do brag doca · raport prywatny; wpis do brag doca dodaje użytkownik po potwierdzeniu.
 - 2026-10-21 · Odmiana liczebników w UI przez `pl_plural` (1 wiersz / 2 wiersze / 5 wierszy) · „1 wierszy” widoczne na zrzucie ekranu.
+- 2026-10-21 · Eksploracja danych: przycisk „▷ Uruchom” na stronie ćwiczenia i `skillforge sql` — zapytanie tylko do odczytu, bez porównania i bez zapisu próby (limit 1000 / 50 wierszy) · „Sprawdź” służy do oceny; eksploracja nie może zaśmiecać historii prób ani listy słabych ćwiczeń.

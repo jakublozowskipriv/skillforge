@@ -130,3 +130,21 @@ def test_hints_are_revealed_one_by_one(warehouse: Path, monkeypatch: pytest.Monk
     assert not at.info
     at.button(key="hint-btn:ae-ex-01").click().run()
     assert len(at.info) == 1 and "Podpowiedź 1" in at.info[0].value
+
+
+@pytest.mark.integration
+def test_run_explores_without_recording(warehouse: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(paths, "WAREHOUSE_PATH", warehouse)
+    at = run_page(_exercises)
+    at.text_area[0].set_value("select carrier_code, carrier_name from marts.dim_carrier").run()
+    at.button(key="run:ae-ex-01").click().run()
+    assert not at.exception
+    assert any("nie jest sprawdzany" in c.value for c in at.caption)
+    assert any(c.value == "5 wierszy" for c in at.caption)
+    assert len(at.dataframe) >= 1
+    assert default_progress().attempts("ae-ex-01") == []
+
+    at.text_area[0].set_value("select nope").run()
+    at.button(key="run:ae-ex-01").click().run()
+    assert any("Błąd wykonania" in e.value for e in at.error)
+    assert default_progress().attempts("ae-ex-01") == []
