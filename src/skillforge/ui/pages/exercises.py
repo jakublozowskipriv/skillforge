@@ -1,16 +1,17 @@
-"""Exercise page: question, editor, check, readable diff, hints."""
+"""Exercise page: question, editor, check, readable diff, hints, attempt history."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
 
 from skillforge import paths, warehouse
-from skillforge.content.loader import load_exercises
 from skillforge.content.models import Exercise
 from skillforge.evaluator import EvalContext, EvalResult, evaluate
-from skillforge.progress.service import default_progress
+from skillforge.progress.projections import ExerciseStats
+from skillforge.ui import nav, state
 from skillforge.ui.components import render_eval_result
 
 DIFFICULTY = {1: "●○○ łatwe", 2: "●●○ średnie", 3: "●●● trudne"}
@@ -44,6 +45,34 @@ def _render_hints(ex: Exercise) -> None:
         st.rerun()
 
 
+def _status_icon(stats: ExerciseStats | None) -> str:
+    if stats is None:
+        return "⚪"
+    return "✅" if stats.solved else "🟠"
+
+
+def _render_history(ex: Exercise) -> None:
+    history = state.progress().attempts(ex.id)
+    if not history:
+        return
+    solved = "✅ rozwiązane" if any(a.passed for a in history) else "jeszcze nierozwiązane"
+    st.caption(f"Próby: {len(history)} · {solved}")
+    with st.expander("🕘 Historia prób"):
+        df = pd.DataFrame(
+            [
+                {
+                    "kiedy": f"{a.at.astimezone():%d.%m %H:%M}",
+                    "wynik": "✅" if a.passed else "❌",
+                    "score": round(a.score, 2),
+                    "kod": a.code,
+                }
+                for a in reversed(history)
+            ]
+        )
+        st.dataframe(df, hide_index=True, width="stretch")
+        st.caption(f"Feedback od tutora: w Claude Code uruchom `/review {ex.id}`.")
+
+
 def render() -> None:
     st.title("🧪 Ćwiczenia")
     wh = paths.WAREHOUSE_PATH
@@ -52,16 +81,25 @@ def render() -> None:
         st.code("uv run skillforge data build", language="bash")
         return
 
-    exercises = load_exercises()
-    if not exercises:
+    index = state.content()
+    if not index.exercises:
         st.info("Brak ćwiczeń w `content/`. Wygeneruj je komendą `/next-lesson`.")
         return
-    by_id = {e.id: e for e in exercises}
-    ex_id = st.selectbox("Ćwiczenie", list(by_id), format_func=lambda i: f"{i} · {by_id[i].title}")
-    ex = by_id[ex_id]
+    stats = state.progress().exercise_stats()
+    ids = sorted(index.exercises)
+    wanted = st.query_params.get("ex")
+    ex_id = st.selectbox(
+        "Ćwiczenie",
+        ids,
+        index=ids.index(wanted) if wanted in ids else 0,
+        format_func=lambda i: f"{_status_icon(stats.get(i))} {i} · {index.exercises[i].title}",
+    )
+    ex = index.exercises[ex_id]
 
     st.subheader(ex.title)
     st.caption(f"{ex.kind.upper()} · {DIFFICULTY[ex.difficulty]} · temat `{ex.topic}`")
+    if ex.lesson and ex.lesson in index.lessons:
+        nav.link("lekcje", f"Lekcja: {index.lessons[ex.lesson].title}", icon="📖", lesson=ex.lesson)
     st.markdown(ex.question)
     if ex.kind == "sql":
         _render_schema_browser(wh)
@@ -73,13 +111,9 @@ def render() -> None:
         with st.spinner("Uruchamiam i porównuję z golden setem…"):
             outcome = evaluate(ex.to_case(), code, EvalContext(wh))
         st.session_state[result_key] = outcome
-        default_progress().record_attempt(ex.id, code, outcome)
+        state.progress().record_attempt(ex.id, code, outcome)
 
-    history = default_progress().attempts(ex.id)
-    if history:
-        solved = "✅ rozwiązane" if any(a.passed for a in history) else "jeszcze nierozwiązane"
-        st.caption(f"Próby: {len(history)} · {solved}")
-
+    _render_history(ex)
     result: EvalResult | None = st.session_state.get(result_key)
     if result is not None:
         render_eval_result(result)

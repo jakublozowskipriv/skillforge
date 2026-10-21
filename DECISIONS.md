@@ -56,3 +56,9 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Testy izolują `var/progress.db` fixture'em autouse · testy UI zapisują próby i nie mogą zaśmiecać prawdziwego postępu.
 - 2026-10-21 · FSRS bez fuzzingu (`Scheduler(enable_fuzzing=False)`), domyślne parametry i retencja 0.9 · stan karty to fold logu — musi wyjść identycznie na każdym urządzeniu.
 - 2026-10-21 · Dzienna kolejka: najpierw zaległe powtórki (najbardziej przeterminowane pierwsze), potem nowe karty do limitu 10/dzień liczonego po dacie pierwszej powtórki · limit działa między sesjami i urządzeniami bez osobnego licznika.
+- 2026-10-21 · UI: strony jako funkcje + `st.navigation`, rejestr stron w `ui/nav.py` dla linków między stronami (`?ex=`, `?lesson=`) · brak cyklicznych importów, linki „lekcja ↔ ćwiczenie ↔ fiszki”.
+- 2026-10-21 · Cache treści w UI kluczowany najnowszym mtime w `content/` · lekcje dodane przez `/next-lesson` pojawiają się bez restartu aplikacji.
+- 2026-10-21 · Tydzień: slot zaliczony, gdy w tygodniu jest sesja tego samego rodzaju (nie musi być w ten sam dzień) · rytm ma motywować, a nie karać za przesunięcie teorii z wtorku na środę.
+- 2026-10-21 · Fiszki: skróty klawiszowe (spacja, 1–4) i podgląd interwału na przyciskach · szybka powtórka; widać, co zrobi ocena.
+- 2026-10-21 · Drzewo kompetencji w zwijanym panelu obok lekcji · na telefonie (Tailscale) lekcja jest od razu widoczna.
+- 2026-10-21 · Testy UI: `AppTest.from_function` per strona + `from_file` dla startu aplikacji · AppTest nie przełącza stron zdefiniowanych funkcjami.

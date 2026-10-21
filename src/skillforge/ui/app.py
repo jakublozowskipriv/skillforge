@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from skillforge.ui.pages import exercises
+from skillforge.ui import nav
+from skillforge.ui.pages import dashboard, exercises, flashcards, journal, lessons
 
 
 def main() -> None:
@@ -14,5 +15,11 @@ def main() -> None:
         "</style>",
         unsafe_allow_html=True,
     )
-    pages = [st.Page(exercises.render, title="Ćwiczenia", icon="🧪", url_path="cwiczenia")]
+    pages = [
+        nav.register(dashboard.render, "Dashboard", "🏠", "dashboard", default=True),
+        nav.register(lessons.render, "Lekcje", "📖", "lekcje"),
+        nav.register(exercises.render, "Ćwiczenia", "🧪", "cwiczenia"),
+        nav.register(flashcards.render, "Fiszki", "🃏", "fiszki"),
+        nav.register(journal.render, "Dziennik", "📝", "dziennik"),
+    ]
     st.navigation(pages).run()
