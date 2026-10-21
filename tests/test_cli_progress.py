@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from skillforge.cli import app
@@ -31,3 +32,29 @@ def test_attempts_missing_exercise_fails() -> None:
 
 def test_brag_markdown_empty() -> None:
     assert "# Brag doc" in invoke("progress", "brag")
+
+
+@pytest.mark.integration
+def test_check_from_file(tmp_path: Path, warehouse: Path) -> None:
+    from skillforge import paths
+
+    ok = tmp_path / "ok.sql"
+    ok.write_text("select carrier_code from marts.dim_carrier", encoding="utf-8")
+    bad = tmp_path / "bad.sql"
+    bad.write_text("select 1 as x", encoding="utf-8")
+    # ae-ex-08 snapshot comes from the full warehouse; on the small test warehouse we only check
+    # that the command runs, reports and records attempts.
+    args = ["check", "ae-ex-08", str(bad), "--record", "--warehouse", str(warehouse)]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 1 and "FAIL ae-ex-08" in result.output
+    assert "Brakujące kolumny" in result.output
+    unknown = runner.invoke(app, ["check", "nope", str(ok)])
+    assert unknown.exit_code == 2
+    assert paths.PROGRESS_DB_PATH.exists()
+
+
+@pytest.mark.integration
+def test_data_schema(warehouse: Path) -> None:
+    out = invoke("data", "schema", "marts", "--warehouse", str(warehouse))
+    assert "marts.fct_shipments: shipment_id bigint" in out
+    assert "raw." not in out

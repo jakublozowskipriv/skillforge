@@ -77,3 +77,7 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Ikony PWA wygenerowane czystym Pythonem (PNG 192/512 + SVG) · bez zależności graficznych; Android wymaga PNG do instalacji.
 - 2026-10-21 · Pages deploy tylko z `main` (osobny workflow), a build strony `--strict` w CI na każdym pushu · na stronę trafia wyłącznie zmergowana, publiczna treść.
 - 2026-10-21 · Telefon → pełna aplikacja: zalecany `tailscale serve` (HTTPS w tailnecie, aplikacja dalej na localhost); `serve --lan` jako wariant prosty z ostrzeżeniem o braku logowania · bez wystawiania do internetu.
+- 2026-10-21 · Komendy tutora (`.claude/commands/`) po polsku, z `allowed-tools` ograniczonymi do `uv run`, odczytu/zapisu plików i commitu treści · mniej pytań o uprawnienia, brak dostępu do push/sieci.
+- 2026-10-21 · `/next-lesson`: wybór tematu deterministycznym przepisem (priorytet ścieżki → najniższy poziom → najmniej lekcji, słabe wyniki mają pierwszeństwo, bez dwóch lekcji z rzędu o tym samym temacie); każde ćwiczenie ≥ 1 negatywna kontrolka · powtarzalne decyzje tutora, jakość golden setu.
+- 2026-10-21 · CLI `skillforge check <id> <plik>` i `skillforge data schema` · tutor w `/review` eksperymentuje bez zapisu prób; użytkownik może pracować w edytorze zamiast w UI.
+- 2026-10-21 · `/weekly-review` zapisuje raport do `var/reviews/` i nie wymyśla liczb do brag doca · raport prywatny; wpis do brag doca dodaje użytkownik po potwierdzeniu.

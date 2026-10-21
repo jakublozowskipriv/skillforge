@@ -82,6 +82,58 @@ def data_build(
     typer.secho(f"Warehouse ready → {warehouse}", fg=typer.colors.GREEN)
 
 
+@data_app.command("schema")
+def data_schema(
+    layer: Annotated[
+        str | None, typer.Argument(help="marts | intermediate | staging | raw (default: all)")
+    ] = None,
+    warehouse: WarehouseOpt = paths.WAREHOUSE_PATH,
+) -> None:
+    """List tables and columns of the exercise warehouse."""
+    from skillforge.warehouse import describe
+
+    for schema, tables in describe(warehouse).items():
+        if layer and schema != layer:
+            continue
+        for table, cols in tables.items():
+            typer.echo(f"{schema}.{table}: " + ", ".join(f"{c} {t.lower()}" for c, t in cols))
+
+
+@app.command()
+def check(
+    exercise_id: Annotated[str, typer.Argument(help="Exercise id, e.g. ae-ex-04.")],
+    file: Annotated[Path, typer.Argument(help="File with your SQL query / Python code.")],
+    record: Annotated[bool, typer.Option(help="Save the attempt to your progress.")] = False,
+    warehouse: WarehouseOpt = paths.WAREHOUSE_PATH,
+) -> None:
+    """Check a solution from a file against the golden set (exit code 1 when it fails)."""
+    from skillforge.content.loader import load_content
+    from skillforge.evaluator import EvalContext, evaluate
+    from skillforge.progress.service import default_progress
+
+    exercises = load_content().exercises
+    if exercise_id not in exercises:
+        typer.secho(f"Unknown exercise {exercise_id}", fg="red", err=True)
+        raise typer.Exit(2)
+    ex = exercises[exercise_id]
+    code = file.read_text(encoding="utf-8")
+    result = evaluate(ex.to_case(), code, EvalContext(warehouse))
+    if record:
+        default_progress().record_attempt(ex.id, code, result)
+    if result.passed:
+        typer.secho(f"PASS {ex.id} ({result.duration_ms:.0f} ms)", fg="green")
+        return
+    typer.secho(f"FAIL {ex.id} (score {result.score:.2f})", fg="red")
+    if result.error:
+        typer.echo(result.error)
+    for line in result.diff.summary() if result.diff else []:
+        typer.echo(f"  - {line}")
+    for t in result.test_results:
+        if not t.passed:
+            typer.echo(f"  - {t.name}: expected {t.expected!r}, got {t.error or repr(t.got)}")
+    raise typer.Exit(1)
+
+
 @content_app.command("snapshot")
 def content_snapshot(
     ids: Annotated[list[str] | None, typer.Argument(help="Exercise ids; default: all.")] = None,
