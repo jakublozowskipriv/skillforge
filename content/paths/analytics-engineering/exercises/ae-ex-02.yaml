@@ -1,0 +1,40 @@
+id: ae-ex-02
+title: Ile kodów przewoźników trzeba naprawić w staging?
+kind: sql
+lesson: ae-01
+topic: ae.dbt-layers
+difficulty: 1
+question: |
+  W `raw.shipments` kod przewoźnika jest wpisywany ręcznie w WMS: obok `SWIFT` trafiają się
+  `swift` czy `Swift ` (ze spacją). Kanoniczne kody są w `raw.carriers.carrier_code`.
+
+  Policz dla każdego przewoźnika (po kanonicznym kodzie):
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `carrier_code` | kanoniczny kod z `raw.carriers` |
+  | `shipments` | liczba przesyłek tego przewoźnika (po normalizacji kodu) |
+  | `non_canonical` | ile z nich ma w `raw.shipments` kod różny od kanonicznego |
+  | `non_canonical_share` | `non_canonical / shipments` jako ułamek 0–1 (bez zaokrąglania) |
+hints:
+  - Normalizacja to `upper(trim(carrier_code))` — dokładnie to robi model `stg_raw__shipments`.
+  - Złącz `raw.shipments` z `raw.carriers` po znormalizowanym kodzie, a „niekanoniczny” to wiersz, w którym surowy kod różni się od kanonicznego.
+  - "Uważaj na dzielenie całkowite: w wielu bazach `int / int` obcina wynik. W DuckDB `/` zwraca double, w BigQuery użyj `SAFE_DIVIDE` albo rzutowania."
+reference: |
+  select
+      c.carrier_code,
+      count(*) as shipments,
+      count(*) filter (where s.carrier_code <> c.carrier_code) as non_canonical,
+      count(*) filter (where s.carrier_code <> c.carrier_code) / count(*) as non_canonical_share
+  from raw.shipments as s
+  inner join raw.carriers as c
+      on upper(trim(s.carrier_code)) = c.carrier_code
+  group by c.carrier_code
+negatives:
+  # bez trim: kody ze spacją na końcu wypadają z joina
+  - |
+    select c.carrier_code, count(*) as shipments,
+           count(*) filter (where s.carrier_code <> c.carrier_code) as non_canonical,
+           count(*) filter (where s.carrier_code <> c.carrier_code) / count(*) as non_canonical_share
+    from raw.shipments s join raw.carriers c on upper(s.carrier_code) = c.carrier_code
+    group by c.carrier_code

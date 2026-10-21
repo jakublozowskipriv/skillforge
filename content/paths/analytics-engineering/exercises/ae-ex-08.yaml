@@ -1,0 +1,37 @@
+id: ae-ex-08
+title: Napisz test dbt ręcznie — relationships na surowych kodach
+kind: sql
+lesson: ae-03
+topic: ae.data-tests-contracts
+difficulty: 1
+question: |
+  Test `relationships` w dbt sprawdza, czy każda wartość klucza obcego istnieje w tabeli
+  docelowej. Jak każdy test dbt, jest to zapytanie zwracające **wiersze łamiące regułę**.
+
+  Napisz ręcznie taki test dla `raw.shipments.carrier_code` → `raw.carriers.carrier_code`
+  **bez żadnej normalizacji** (tak, jakby ktoś postawił test na źródle). Zwróć zgrupowane błędy:
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `carrier_code` | surowy kod z `raw.shipments`, którego nie ma w `raw.carriers` (bez zmian, ze spacjami) |
+  | `shipments` | ile przesyłek ma ten kod |
+hints:
+  - Klasyczny wzorzec testu relationships to `left join` do tabeli docelowej i `where docelowa.klucz is null` (albo `where not exists (...)`).
+  - Nie normalizuj kodu — chcesz zobaczyć dokładnie te wartości, które psują test. Spacje na końcu też są częścią wartości.
+  - Ten wynik to argument, dlaczego normalizacja jest w staging, a test `relationships` stoi na `stg_raw__shipments`, nie na źródle.
+reference: |
+  select
+      s.carrier_code,
+      count(*) as shipments
+  from raw.shipments as s
+  left join raw.carriers as c on s.carrier_code = c.carrier_code
+  where c.carrier_id is null
+  group by s.carrier_code
+negatives:
+  # znormalizowany kod — test „przechodzi”, choć na źródle by nie przeszedł
+  - |
+    select upper(trim(s.carrier_code)) as carrier_code, count(*) as shipments
+    from raw.shipments s
+    left join raw.carriers c on upper(trim(s.carrier_code)) = c.carrier_code
+    where c.carrier_id is null
+    group by 1

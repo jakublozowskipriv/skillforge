@@ -1,0 +1,53 @@
+# Profil aplikacji (PRZYKŁAD — fikcyjne wartości).
+# Skopiuj do `profile.yaml` (gitignored) i wpisz własne. Aplikacja czyta profile.yaml, a gdy go
+# nie ma — ten plik.
+
+# Tygodniowy rytm nauki. `days`: kiedy slot może się odbyć (mon..sun). `kind`: theory|practice|review.
+rhythm:
+  - id: theory
+    label: "Teoria"
+    kind: theory
+    days: [wed]
+    minutes: 60
+  - id: practice
+    label: "Praktyka"
+    kind: practice
+    days: [sun]
+    minutes: 90
+  - id: review
+    label: "Przegląd tygodnia + brag doc"
+    kind: review
+    days: [fri]
+    minutes: 15
+
+# Miesiące o luźniejszym rytmie (1–12).
+light_months: [7]
+
+# Kolejność ścieżek wg priorytetu (id z content/tree.yaml) — używa jej /next-lesson.
+path_priority:
+  - analytics-engineering
+  - ai-engineering
+  - business-thinking
+  - statistics
+
+# KPI rozwoju, aktualizowane ręcznie w aplikacji. `targets`: kamienie milowe.
+kpis:
+  - id: dbt_models_in_prod
+    name: "Modele dbt wdrożone w pracy"
+    unit: "szt."
+    baseline: 0
+    targets:
+      - { by: 2027-03-31, value: 5 }
+  - id: recommendations_pln
+    name: "Analizy z rekomendacją w PLN"
+    unit: "szt."
+    baseline: 0
+    targets:
+      - { by: 2027-03-31, value: 2 }
+      - { by: 2027-06-30, value: 4 }
+  - id: talks
+    name: "Wystąpienia na demo / knowledge sharing"
+    unit: "szt."
+    baseline: 0
+    targets:
+      - { by: 2027-03-31, value: 1 }

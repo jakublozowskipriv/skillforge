@@ -1,0 +1,151 @@
+cards:
+  # --- ae-01: warstwy w dbt ---------------------------------------------------------------
+  - id: ae-c-01
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Jakie są cztery typowe warstwy projektu dbt i co robi każda z nich?
+    back: |
+      **raw** (źródła, bez zmian) → **staging** (1:1 ze źródłem: typy, nazwy, normalizacja,
+      deduplikacja) → **intermediate** (reużywalne klocki logiki) → **marts** (fakty i wymiary
+      z jasnym grainem dla BI).
+  - id: ae-c-02
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Czym różni się `source()` od `ref()` w dbt?
+    back: |
+      `source('raw', 'tabela')` wskazuje dane **spoza** dbt (zadeklarowane w YAML, z testami
+      i freshness). `ref('model')` wskazuje **inny model dbt** — z tych odwołań dbt buduje DAG
+      i kolejność uruchamiania.
+  - id: ae-c-03
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Dlaczego deduplikacja eventów z API przewoźnika należy do warstwy staging?
+    back: |
+      Bo duplikaty są cechą **źródła** (dostarczanie at-least-once), a nie logiki biznesowej.
+      Naprawiasz je raz, najbliżej źródła — każdy model niżej może zakładać unikalność.
+  - id: ae-c-04
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Wymień dwa antywzorce w warstwie staging.
+    back: |
+      1. JOIN-y między źródłami (staging przestaje być 1:1 ze źródłem).
+      2. Logika biznesowa (np. definicja on-time) — należy do martów.
+  - id: ae-c-05
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Co robi `qualify` i kiedy go używasz?
+    back: |
+      Filtruje wiersze po wyniku funkcji okna (jak `having` dla `group by`). Typowo:
+      `qualify row_number() over (partition by klucz order by loaded_at) = 1` — deduplikacja
+      bez podzapytania.
+  - id: ae-c-06
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: "Co wybiorą selektory `dbt build --select fct_shipments+` i `--select +fct_shipments`?"
+    back: |
+      `fct_shipments+` — model i wszystko, co od niego **zależy** (downstream).
+      `+fct_shipments` — model i wszystko, czego **potrzebuje** (upstream).
+  - id: ae-c-07
+    topic: ae.dbt-layers
+    lesson: ae-01
+    front: Do czego służy `loaded_at_field` w definicji źródła?
+    back: |
+      Do sprawdzania świeżości danych (`dbt source freshness`): dbt porównuje najnowszy
+      `loaded_at` z progami `warn_after` / `error_after`. To sensor świeżości zdefiniowany
+      obok danych, a nie w orkiestratorze.
+
+  # --- ae-02: modelowanie wymiarowe -------------------------------------------------------
+  - id: ae-c-08
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Co to jest grain tabeli faktów i dlaczego ustalasz go jako pierwszy?
+    back: |
+      Odpowiedź na pytanie „co oznacza jeden wiersz?” (np. jedna przesyłka). Od grainu zależy,
+      które kolumny i joiny są dozwolone; testujesz go przez `unique` na kluczu grainu.
+  - id: ae-c-09
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Co to jest fan-out i jak go uniknąć przy łączeniu faktu z tabelą o drobniejszym grainie?
+    back: |
+      JOIN mnoży wiersze faktu (przesyłka z 2 reklamacjami występuje 2×), więc sumy są zawyżone.
+      Najpierw zagreguj drobniejszą tabelę do grainu faktu (np. `complaints_count`), potem łącz.
+  - id: ae-c-10
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Podaj przykład miary addytywnej, póładdytywnej i nieaddytywnej.
+    back: |
+      Addytywna: koszt wysyłki (sumujesz po wszystkim). Póładdytywna: stan magazynu (nie sumujesz
+      po czasie). Nieaddytywna: on-time rate, percentyle, średni czas tranzytu — liczysz od nowa
+      z faktów.
+  - id: ae-c-11
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Czym różni się SCD typu 1 od SCD typu 2?
+    back: |
+      SCD1 nadpisuje atrybut (brak historii). SCD2 dodaje nowy wiersz-wersję z `valid_from`/`valid_to`,
+      więc fakty z przeszłości łączysz z wersją ważną w chwili zdarzenia.
+  - id: ae-c-12
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Jak wygląda warunek joinu point-in-time do wymiaru SCD2?
+    back: |
+      `klucz_naturalny = klucz_naturalny and data_zdarzenia >= valid_from and data_zdarzenia < valid_to`
+      — z wyłącznym `valid_to` i otwartą wersją oznaczoną `9999-12-31` zamiast NULL.
+  - id: ae-c-13
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Dlaczego `generate_surrogate_key` zamienia NULL na placeholder?
+    back: |
+      Bo konkatenacja z NULL daje NULL (cały klucz znika), a bez placeholdera różne kombinacje
+      z pustymi wartościami mogłyby dać ten sam hash.
+  - id: ae-c-14
+    topic: ae.dimensional-modeling
+    lesson: ae-02
+    front: Po co generowany wymiar dat (`dim_date`), skoro daty są w faktach?
+    back: |
+      Definiujesz raz tydzień, miesiąc, dzień tygodnia, weekend; dni bez zdarzeń też istnieją
+      (ciągłe osie na wykresach); filtry po `week_start` dają pełne tygodnie.
+
+  # --- ae-03: testy, kontrakty, materializacje --------------------------------------------
+  - id: ae-c-15
+    topic: ae.data-tests-contracts
+    lesson: ae-03
+    front: Co zwraca test w dbt i kiedy test „przechodzi”?
+    back: |
+      Test to SELECT zwracający **wiersze łamiące regułę**. Zero wierszy = test zielony.
+  - id: ae-c-16
+    topic: ae.data-tests-contracts
+    lesson: ae-03
+    front: Czym różni się data test od unit testu w dbt?
+    back: |
+      Data test sprawdza prawdziwe dane po zbudowaniu modelu. Unit test (dbt ≥ 1.8) sprawdza logikę
+      SQL na spreparowanych wierszach wejściowych i oczekiwanym wyjściu — także na przypadkach,
+      których jeszcze nie ma w danych.
+  - id: ae-c-17
+    topic: ae.data-tests-contracts
+    lesson: ae-03
+    front: "Co daje `contract: enforced: true` na modelu?"
+    back: |
+      dbt sprawdza przed utworzeniem tabeli, czy nazwy kolumn, typy i constraints zgadzają się
+      z YAML. Niezgodność zatrzymuje build — kontrakt to „API” martu dla konsumentów.
+  - id: ae-c-18
+    topic: ae.materializations
+    lesson: ae-03
+    front: Wymień cztery materializacje dbt i typowe zastosowanie każdej.
+    back: |
+      `view` — staging/intermediate; `table` — marty; `incremental` — duże rosnące fakty;
+      `ephemeral` — małe klocki wklejane jako CTE.
+  - id: ae-c-19
+    topic: ae.materializations
+    lesson: ae-03
+    front: Dlaczego model incremental na eventach filtruje po `loaded_at`, a nie po `event_at`?
+    back: |
+      Spóźnione eventy mają stary `event_at`, ale dotarły po ostatnim runie. Filtr po `event_at`
+      zgubiłby je na zawsze; filtr po `loaded_at` (z lookbackiem) je łapie.
+  - id: ae-c-20
+    topic: ae.semantic-metrics
+    lesson: ae-03
+    front: Jakie elementy musi mieć definicja (kontrakt) metryki?
+    back: |
+      Licznik, mianownik (z tej samej populacji), okno czasu, grain wyniku i wykluczenia.
+      Wskaźnik liczysz jako `sum(licznik) / sum(mianownik)`, nie jako średnią średnich.

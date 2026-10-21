@@ -1,0 +1,53 @@
+id: ai-ex-04
+title: Jednoznaczne zapytanie referencyjne do niejednoznacznego pytania
+kind: sql
+lesson: ai-01
+topic: ai.llm-evals
+difficulty: 2
+question: |
+  Biznes pyta agenta: *„Jaki był on-time rate w kwietniu 2026 per przewoźnik?”*. To pytanie
+  można zrozumieć na co najmniej dwa sposoby (kwiecień wg daty odbioru? wg daty doręczenia?),
+  a golden set potrzebuje **jednej** definicji. Zespół ustalił:
+
+  - populacja: przesyłki **doręczone** (`shipment_status = 'delivered'`),
+  - okres: data **doręczenia** od `2026-04-01` (włącznie) do `2026-05-01` (wyłącznie),
+  - on-time: `fct_shipments.is_on_time`.
+
+  Napisz zapytanie referencyjne:
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `carrier_code` | kod przewoźnika |
+  | `delivered` | liczba doręczonych przesyłek w okresie |
+  | `on_time_rate` | odsetek doręczonych na czas (ułamek 0–1, bez zaokrąglania) |
+hints:
+  - Filtr okresu zapisz jako `delivered_at >= ... and delivered_at < ...` — półotwarty przedział nie gubi doręczeń z 30 kwietnia po północy.
+  - "Interpretacja „wg daty odbioru” daje inne liczby — sprawdź sam, jak bardzo. To właśnie dlatego pytania w golden secie trzeba doprecyzować."
+reference: |
+  select
+      c.carrier_code,
+      count(*) as delivered,
+      count(*) filter (where f.is_on_time) / count(*) as on_time_rate
+  from marts.fct_shipments as f
+  inner join marts.dim_carrier as c using (carrier_id)
+  where f.shipment_status = 'delivered'
+    and f.delivered_at >= timestamp '2026-04-01'
+    and f.delivered_at < timestamp '2026-05-01'
+  group by c.carrier_code
+negatives:
+  # druga interpretacja: kwiecień wg daty odbioru
+  - |
+    select c.carrier_code, count(*) as delivered,
+           count(*) filter (where f.is_on_time) / count(*) as on_time_rate
+    from marts.fct_shipments f join marts.dim_carrier c using (carrier_id)
+    where f.shipment_status = 'delivered'
+      and f.picked_up_at >= timestamp '2026-04-01' and f.picked_up_at < timestamp '2026-05-01'
+    group by c.carrier_code
+  # zamknięty przedział `between` z datą — gubi doręczenia z 30.04 po północy
+  - |
+    select c.carrier_code, count(*) as delivered,
+           count(*) filter (where f.is_on_time) / count(*) as on_time_rate
+    from marts.fct_shipments f join marts.dim_carrier c using (carrier_id)
+    where f.shipment_status = 'delivered'
+      and f.delivered_at between timestamp '2026-04-01' and timestamp '2026-04-30'
+    group by c.carrier_code

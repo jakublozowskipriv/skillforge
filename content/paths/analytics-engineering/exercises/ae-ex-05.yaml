@@ -1,0 +1,43 @@
+id: ae-ex-05
+title: First mile — mediana i p90 per magazyn i przewoźnik
+kind: sql
+lesson: ae-02
+topic: ae.dimensional-modeling
+difficulty: 2
+question: |
+  First mile to czas od utworzenia etykiety w magazynie do odbioru przez kuriera
+  (`fct_shipments.first_mile_hours`). Percentyle są miarą **nieaddytywną** — nie da się ich
+  złożyć z wyników per dzień, trzeba je liczyć z wierszy faktu.
+
+  Dla przesyłek, które zostały odebrane, policz per magazyn i przewoźnik:
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `warehouse_code` | kod magazynu (`dim_warehouse`) |
+  | `carrier_code` | kod przewoźnika (`dim_carrier`) |
+  | `p50_hours` | mediana `first_mile_hours` — percentyl **ciągły** (z interpolacją) |
+  | `p90_hours` | 90. percentyl `first_mile_hours` — percentyl ciągły |
+hints:
+  - W DuckDB percentyl ciągły to `quantile_cont(kolumna, 0.5)` (alias `percentile_cont(0.5) within group (order by kolumna)`).
+  - "Przesyłki bez odbioru mają `first_mile_hours` = NULL — funkcje agregujące i tak je pomijają, ale jawny filtr `picked_up_at is not null` czyta się lepiej."
+  - W BigQuery odpowiednikiem jest `APPROX_QUANTILES` (przybliżony!) albo `PERCENTILE_CONT` jako funkcja okna — warto wiedzieć, który liczysz na produkcji.
+reference: |
+  select
+      w.warehouse_code,
+      c.carrier_code,
+      quantile_cont(f.first_mile_hours, 0.5) as p50_hours,
+      quantile_cont(f.first_mile_hours, 0.9) as p90_hours
+  from marts.fct_shipments as f
+  inner join marts.dim_warehouse as w using (warehouse_id)
+  inner join marts.dim_carrier as c using (carrier_id)
+  where f.picked_up_at is not null
+  group by w.warehouse_code, c.carrier_code
+negatives:
+  # percentyl dyskretny zamiast ciągłego
+  - |
+    select w.warehouse_code, c.carrier_code,
+           quantile_disc(f.first_mile_hours, 0.5) as p50_hours,
+           quantile_disc(f.first_mile_hours, 0.9) as p90_hours
+    from marts.fct_shipments f join marts.dim_warehouse w using (warehouse_id)
+    join marts.dim_carrier c using (carrier_id)
+    where f.picked_up_at is not null group by all

@@ -1,0 +1,55 @@
+id: ae-ex-01
+title: Ile duplikatów przysyłają API przewoźników?
+kind: sql
+lesson: ae-01
+topic: ae.dbt-layers
+difficulty: 1
+question: |
+  Eventy trackingowe trafiają do `raw.shipment_events` z API przewoźników w trybie
+  *at-least-once*: ten sam event (ta sama przesyłka, ten sam `event_type` i ten sam `event_at`)
+  potrafi przyjść drugi raz z nowym `event_id`.
+
+  Zanim napiszesz model staging, zmierz skalę problemu. Dla każdego `event_type` zwróć:
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `event_type` | typ eventu |
+  | `raw_events` | liczba wierszy w `raw.shipment_events` |
+  | `unique_events` | liczba unikalnych eventów (unikalnych kombinacji przesyłka + typ + czas) |
+  | `duplicates` | `raw_events - unique_events` |
+hints:
+  - Unikalny event to unikalna kombinacja `(shipment_id, event_type, event_at)`. Skoro grupujesz po `event_type`, wystarczą pozostałe dwie kolumny.
+  - "`count(distinct ...)` na kilku kolumnach: w DuckDB zadziała `count(distinct (shipment_id, event_at))`. Uniwersalnie: podzapytanie z `select distinct` i dopiero potem `group by`."
+  - Inne podejście, jak w modelu `stg_raw__shipment_events`, to `row_number() over (partition by shipment_id, event_type, event_at)`. Duplikaty to wiersze z `rn > 1`.
+reference: |
+  with unique_events as (
+      select distinct shipment_id, event_type, event_at
+      from raw.shipment_events
+  )
+
+  select
+      r.event_type,
+      r.raw_events,
+      u.unique_events,
+      r.raw_events - u.unique_events as duplicates
+  from (
+      select event_type, count(*) as raw_events
+      from raw.shipment_events
+      group by event_type
+  ) as r
+  inner join (
+      select event_type, count(*) as unique_events
+      from unique_events
+      group by event_type
+  ) as u using (event_type)
+negatives:
+  # unikalność po samym shipment_id — dawało ten sam wynik, dopóki zwroty nie miały 2 prób doręczenia
+  - |
+    select event_type, count(*) as raw_events, count(distinct shipment_id) as unique_events,
+           count(*) - count(distinct shipment_id) as duplicates
+    from raw.shipment_events group by event_type
+  # unikalność po event_id — event_id jest zawsze unikalny, więc duplikatów „nie ma”
+  - |
+    select event_type, count(*) as raw_events, count(distinct event_id) as unique_events,
+           count(*) - count(distinct event_id) as duplicates
+    from raw.shipment_events group by event_type

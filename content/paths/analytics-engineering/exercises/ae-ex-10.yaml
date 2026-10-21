@@ -1,0 +1,57 @@
+id: ae-ex-10
+title: Metryka z kontraktem — reklamacje na 1000 doręczonych przesyłek
+kind: sql
+lesson: ae-03
+topic: ae.semantic-metrics
+difficulty: 2
+question: |
+  Definicja metryki (kontrakt):
+
+  - **licznik:** wszystkie reklamacje z `marts.fct_complaints` (także ponowne, każdy status)
+    dotyczące przesyłek z mianownika,
+  - **mianownik:** przesyłki z `marts.fct_shipments` o `shipment_status = 'delivered'`,
+  - **grain wyniku:** przewoźnik, cały okres danych.
+
+  | kolumna | znaczenie |
+  |---|---|
+  | `carrier_code` | kod przewoźnika |
+  | `delivered_shipments` | mianownik |
+  | `complaints` | licznik |
+  | `complaints_per_1000` | `1000 * complaints / delivered_shipments` (bez zaokrąglania) |
+hints:
+  - "Pułapka: po `left join` przesyłek z reklamacjami przesyłka z dwiema reklamacjami występuje dwa razy — `count(*)` zawyży mianownik. Użyj `count(distinct shipment_id)` albo policz licznik i mianownik osobno."
+  - "`count(kolumna)` liczy tylko wartości różne od NULL — po `left join` to wygodny sposób liczenia reklamacji."
+  - Zastanów się, dlaczego licznik ograniczamy do przesyłek doręczonych — inaczej licznik i mianownik pochodziłyby z różnych populacji.
+reference: |
+  with delivered as (
+      select shipment_id, carrier_id
+      from marts.fct_shipments
+      where shipment_status = 'delivered'
+  )
+
+  select
+      c.carrier_code,
+      count(distinct d.shipment_id) as delivered_shipments,
+      count(fc.complaint_id) as complaints,
+      1000.0 * count(fc.complaint_id) / count(distinct d.shipment_id) as complaints_per_1000
+  from delivered as d
+  inner join marts.dim_carrier as c using (carrier_id)
+  left join marts.fct_complaints as fc on fc.shipment_id = d.shipment_id
+  group by c.carrier_code
+negatives:
+  # fan-out: count(*) po left join zawyża mianownik
+  - |
+    select c.carrier_code, count(*) as delivered_shipments, count(fc.complaint_id) as complaints,
+           1000.0 * count(fc.complaint_id) / count(*) as complaints_per_1000
+    from marts.fct_shipments f join marts.dim_carrier c using (carrier_id)
+    left join marts.fct_complaints fc on fc.shipment_id = f.shipment_id
+    where f.shipment_status = 'delivered'
+    group by c.carrier_code
+  # licznik z wszystkich reklamacji, mianownik tylko z doręczonych (różne populacje)
+  - |
+    with d as (select carrier_id, count(*) as n from marts.fct_shipments
+               where shipment_status = 'delivered' group by 1),
+         k as (select carrier_id, count(*) as n from marts.fct_complaints group by 1)
+    select c.carrier_code, d.n as delivered_shipments, k.n as complaints,
+           1000.0 * k.n / d.n as complaints_per_1000
+    from d join k using (carrier_id) join marts.dim_carrier c using (carrier_id)

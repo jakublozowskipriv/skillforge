@@ -1,0 +1,54 @@
+# Static lesson site. Pages are generated from content/ by `uv run skillforge site build`.
+site_name: skillforge — lekcje
+site_description: Analytics Engineering i AI dla analityki — lekcje, zadania i fiszki (offline).
+site_url: https://jakublozowskipriv.github.io/skillforge/
+repo_url: https://github.com/jakublozowskipriv/skillforge
+docs_dir: ../build/site_docs
+site_dir: ../build/site
+use_directory_urls: true
+
+theme:
+  name: material
+  language: pl
+  custom_dir: overrides
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle: { icon: material/weather-night, name: Tryb ciemny }
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle: { icon: material/weather-sunny, name: Tryb jasny }
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - content.code.copy
+  icon:
+    logo: material/anvil
+  favicon: assets/icon.svg
+
+plugins:
+  - search:
+      lang: en  # Polish stemming is not supported by lunr; English tokenizer works fine
+
+hooks:
+  - hooks.py
+
+extra_javascript:
+  - assets/register-sw.js
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite

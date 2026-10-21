@@ -1,0 +1,7 @@
+{
+  "columns": ["naive_reads", "lookback_reads", "late_missed_by_naive"],
+  "types": ["BIGINT", "BIGINT", "BIGINT"],
+  "rows": [
+    [17654, 19312, 37]
+  ]
+}

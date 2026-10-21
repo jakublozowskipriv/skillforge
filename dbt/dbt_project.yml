@@ -1,0 +1,30 @@
+name: skillforge
+version: "1.0.0"
+config-version: 2
+profile: skillforge
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Layering (why these materializations):
+# - staging: views — thin 1:1 cleanup of sources, cheap to rebuild, always fresh.
+# - intermediate: views — reusable building blocks, not meant for end users.
+# - marts: tables — what BI / exercises query; materialized for speed and stable contracts.
+models:
+  skillforge:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+
+vars:
+  # Late-arriving events: how far back an incremental run re-reads by `loaded_at`.
+  event_lookback_days: 3

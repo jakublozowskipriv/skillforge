@@ -1,0 +1,29 @@
+from pathlib import Path
+
+import pytest
+
+from skillforge.data.build import build_warehouse
+
+TEST_SCALE = 0.05
+
+
+@pytest.fixture(scope="session")
+def warehouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """A small, fully built warehouse (raw + dbt marts), shared by integration tests."""
+    path = tmp_path_factory.mktemp("wh") / "warehouse.duckdb"
+    code = build_warehouse(path, scale=TEST_SCALE, quiet=True)
+    assert code == 0, "dbt build failed for the test warehouse"
+    return path
+
+
+@pytest.fixture(autouse=True)
+def isolated_progress(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Never touch the real var/progress.db or profile.yaml from tests."""
+    from skillforge import paths
+
+    db = tmp_path / "progress.db"
+    monkeypatch.setattr(paths, "PROGRESS_DB_PATH", db)
+    monkeypatch.setattr(paths, "PROGRESS_JSON_PATH", tmp_path / "progress.json")
+    # Tests use the public example profile, never the private profile.yaml on this machine.
+    monkeypatch.setattr(paths, "PROFILE_PATH", tmp_path / "no-profile.yaml")
+    return db

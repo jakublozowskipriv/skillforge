@@ -1,0 +1,64 @@
+id: ai-ex-01
+title: Accuracy per tag z wyników ewaluacji
+kind: python
+lesson: ai-01
+topic: ai.llm-evals
+difficulty: 1
+question: |
+  Run ewaluacji agenta text-to-SQL zwraca listę wyników, np.:
+
+  ```python
+  [{"case_id": "q1", "tags": ["join", "time"], "passed": True}, ...]
+  ```
+
+  Napisz `accuracy_by_tag(results)`, która zwraca słownik **tag → odsetek zaliczonych przypadków
+  z tym tagiem** (ułamek 0–1) oraz klucz `"__all__"` z wynikiem dla wszystkich przypadków.
+  Przypadek z kilkoma tagami liczy się do każdego z nich. Dla pustej listy zwróć
+  `{"__all__": 0.0}`.
+function: accuracy_by_tag
+starter: |
+  def accuracy_by_tag(results: list[dict]) -> dict[str, float]:
+      ...
+hints:
+  - Policz osobno liczbę przypadków i liczbę zaliczonych dla każdego tagu (np. dwa `collections.Counter`).
+  - "Najprościej: dla każdego wyniku iteruj po `[\"__all__\", *r[\"tags\"]]`."
+  - Przypadek bez tagów liczy się tylko do `__all__`.
+reference: |
+  from collections import Counter
+
+
+  def accuracy_by_tag(results: list[dict]) -> dict[str, float]:
+      totals: Counter[str] = Counter()
+      passed: Counter[str] = Counter()
+      for r in results:
+          for tag in ["__all__", *r["tags"]]:
+              totals[tag] += 1
+              passed[tag] += bool(r["passed"])
+      if not totals:
+          return {"__all__": 0.0}
+      return {tag: passed[tag] / totals[tag] for tag in totals}
+tests:
+  - name: pięć przypadków z tagami
+    args:
+      - - { case_id: q1, tags: [join, time], passed: true }
+        - { case_id: q2, tags: [join], passed: false }
+        - { case_id: q3, tags: [aggregation], passed: true }
+        - { case_id: q4, tags: [time], passed: false }
+        - { case_id: q5, tags: [], passed: true }
+    expected: { __all__: 0.6, aggregation: 1.0, join: 0.5, time: 0.5 }
+  - name: pusta lista
+    args: [[]]
+    expected: { __all__: 0.0 }
+  - name: same porażki
+    args:
+      - - { case_id: q1, tags: [scd2], passed: false }
+    expected: { __all__: 0.0, scd2: 0.0 }
+negatives:
+  # accuracy całego runu wpisana każdemu tagowi
+  - |
+    def accuracy_by_tag(results):
+        if not results:
+            return {"__all__": 0.0}
+        acc = sum(r["passed"] for r in results) / len(results)
+        tags = {t for r in results for t in r["tags"]}
+        return {"__all__": acc, **{t: acc for t in tags}}
