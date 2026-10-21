@@ -18,9 +18,9 @@ portfolio i jednocześnie narzędzie, którego używam do własnego rozwoju.
 |---|---|
 | ![Dashboard](docs/img/dashboard.png) | ![Ćwiczenie z diffem](docs/img/exercise-diff.png) |
 
-![Fiszki z powtórkami FSRS](docs/img/flashcards.png)
-
-<!-- Po pierwszym deployu GitHub Pages: docs/img/phone-offline.png (lekcja offline na telefonie). -->
+| Fiszki z powtórkami FSRS | Strona lekcji offline (telefon w trybie samolotowym) |
+|---|---|
+| ![Fiszki z powtórkami FSRS](docs/img/flashcards.png) | <img src="docs/img/phone-offline.png" alt="Strona lekcji offline na telefonie" width="260"> |
 
 *Zrzuty z trybu demo: przykładowy profil (`profile.example.yaml`) i dane fikcyjne.*
 
