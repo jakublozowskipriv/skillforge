@@ -9,14 +9,16 @@ from skillforge.site.offline import manifest, precache_list, write_service_worke
 
 def test_write_docs_from_repo_content(tmp_path: Path) -> None:
     docs = tmp_path / "docs"
-    written = write_docs(load_content(), docs, paths.SITE_DIR / "assets")
+    index = load_content()
+    written = write_docs(index, docs, paths.SITE_DIR / "assets")
     assert (docs / "index.md").exists() and (docs / "assets" / "register-sw.js").exists()
     lesson = (docs / "analytics-engineering" / "ae-02.md").read_text(encoding="utf-8")
     assert lesson.startswith("# Modelowanie wymiarowe")
     assert "### ae-ex-07 · Klucz surogatowy" in lesson
     assert '??? success "Rozwiązanie referencyjne"' in lesson
     assert "## Fiszki" in lesson and '??? question "' in lesson
-    assert len(written) == 1 + 1 + 3  # home + path index + 3 lessons
+    paths_with_lessons = [p for p in index.tree.paths if index.lessons_for_path(p.id)]
+    assert len(written) == 1 + len(paths_with_lessons) + len(index.lessons)
 
 
 def test_rewrite_removes_stale_pages(tmp_path: Path) -> None:

@@ -18,10 +18,12 @@ def warehouse(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 @pytest.fixture(autouse=True)
 def isolated_progress(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Never touch the real var/progress.db from tests."""
+    """Never touch the real var/progress.db or profile.yaml from tests."""
     from skillforge import paths
 
     db = tmp_path / "progress.db"
     monkeypatch.setattr(paths, "PROGRESS_DB_PATH", db)
     monkeypatch.setattr(paths, "PROGRESS_JSON_PATH", tmp_path / "progress.json")
+    # Tests use the public example profile, never the private profile.yaml on this machine.
+    monkeypatch.setattr(paths, "PROFILE_PATH", tmp_path / "no-profile.yaml")
     return db
