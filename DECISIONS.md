@@ -54,3 +54,5 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · `progress.json` = pełny log + `summary` dla tutora (poziomy, słabe ćwiczenia, KPI, sesje z 28 dni, quizy) · jeden plik do synchronizacji i do czytania przez `/next-lesson`.
 - 2026-10-21 · Źródło urządzenia z `SKILLFORGE_SOURCE` (domyślnie `pc`) · etap 2 (PWA) zapisze `phone`.
 - 2026-10-21 · Testy izolują `var/progress.db` fixture'em autouse · testy UI zapisują próby i nie mogą zaśmiecać prawdziwego postępu.
+- 2026-10-21 · FSRS bez fuzzingu (`Scheduler(enable_fuzzing=False)`), domyślne parametry i retencja 0.9 · stan karty to fold logu — musi wyjść identycznie na każdym urządzeniu.
+- 2026-10-21 · Dzienna kolejka: najpierw zaległe powtórki (najbardziej przeterminowane pierwsze), potem nowe karty do limitu 10/dzień liczonego po dacie pierwszej powtórki · limit działa między sesjami i urządzeniami bez osobnego licznika.
