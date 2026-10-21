@@ -22,3 +22,12 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · `fct_shipments`: grain = przesyłka; zegar SLA startuje od `picked_up_at`, SLA z wersji SCD2 ważnej w dniu odbioru; kontrakt dbt `enforced` · on-time to definicja biznesowa — jawna w kodzie, YAML i kontrakcie.
 - 2026-10-21 · `fct_shipment_events` incremental (`delete+insert`, `unique_key`, lookback po `loaded_at` = 3 dni); `data build` zawsze `--full-refresh` · lekcja o spóźnionych eventach; raw jest generowany od zera.
 - 2026-10-21 · dbt uruchamiany jako subprocess z venv (`skillforge data build`), ścieżka hurtowni przez `SKILLFORGE_WAREHOUSE` · testy integracyjne budują małą hurtownię (scale=0.05) w katalogu tymczasowym.
+
+## Dostęp z telefonu (wymaganie dodane 2026-10-21)
+- 2026-10-21 · Lekcje jako statyczna strona MkDocs Material na GitHub Pages, deploy z CI (z `main`) · czytelne na telefonie bez włączonego PC; lekcje i tak są publiczne. Zensical (następca) jeszcze 0.x — migracja później, czyta ten sam `mkdocs.yml`.
+- 2026-10-21 · Offline: własny service worker + manifest generowany hookiem MkDocs po buildzie (precache wszystkich stron) · plugin `offline` Material służy do `file://`, nie do cache w przeglądarce telefonu.
+- 2026-10-21 · `skillforge serve --lan` (Streamlit na 0.0.0.0) + Tailscale w README · pełna aplikacja z telefonu, gdy PC włączony, bez wystawiania portów do internetu.
+- 2026-10-21 · Postęp = append-only log zdarzeń (`event_id` UUID, `type`, `occurred_at`, `recorded_at`, `source` pc|phone, `payload` JSON); stan (FSRS kart, sesje, brag, KPI, poziomy, próby) to projekcja liczona z logu · synchronizacja z wielu urządzeń = suma zbiorów zdarzeń po UUID, bez konfliktów; idempotentny import.
+- 2026-10-21 · Stan FSRS karty = fold zdarzeń `card.reviewed` posortowanych po `occurred_at` (nie po kolejności zapisu) · powtórka z telefonu zsynchronizowana później trafia na właściwe miejsce w historii.
+- 2026-10-21 · Warstwa postępu za interfejsem `EventStore` (Protocol: `append`, `extend`, `read`) + projekcje w czystym Pythonie; SQLite to jedna implementacja · UI i CLI nie znają SQL-a postępu; podmiana na inny magazyn bez zmian w UI.
+- 2026-10-21 · Usunięcie/edycja wpisu = nowe zdarzenie (`brag.retracted`, `kpi.recorded` z nowszym `occurred_at`), nigdy UPDATE/DELETE · log jest prawdą; projekcja decyduje o stanie bieżącym.
