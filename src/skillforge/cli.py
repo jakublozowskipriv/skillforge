@@ -6,6 +6,8 @@ The CLI is the stable interface used by both humans and the Claude Code tutor co
 
 from __future__ import annotations
 
+import io
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -35,6 +37,10 @@ WarehouseOpt = Annotated[Path, typer.Option(help="DuckDB warehouse file.")]
 @app.callback()
 def main() -> None:
     """skillforge CLI."""
+    # Windows pipes/redirects may use a legacy code page (cp1250/cp1252): never crash on → or ✓.
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(errors="replace")
 
 
 @app.command()

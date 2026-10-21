@@ -13,18 +13,28 @@ from skillforge.data.generate import DEFAULT_SEED, generate, load_raw
 
 
 def dbt_executable() -> str:
-    """The ``dbt`` CLI installed in the same environment as this interpreter."""
-    candidate = Path(sys.executable).parent / "dbt"
-    return str(candidate) if candidate.exists() else "dbt"
+    """The ``dbt`` CLI installed in the same environment as this interpreter.
+
+    venv layout differs per OS: ``.venv/bin/dbt`` (Linux/macOS), ``.venv\\Scripts\\dbt.exe``
+    (Windows). Falls back to whatever ``dbt`` is on PATH.
+    """
+    bin_dir = Path(sys.executable).parent
+    for name in ("dbt", "dbt.exe"):
+        candidate = bin_dir / name
+        if candidate.exists():
+            return str(candidate)
+    return "dbt"
 
 
 def run_dbt(args: Sequence[str], warehouse: Path, *, quiet: bool = False) -> int:
     """Run a dbt command against ``warehouse``; returns the exit code."""
     env = {
         **os.environ,
-        "SKILLFORGE_WAREHOUSE": str(warehouse.resolve()),
+        # Forward slashes on every OS: DuckDB accepts them on Windows and they need no escaping.
+        "SKILLFORGE_WAREHOUSE": warehouse.resolve().as_posix(),
         "DBT_PROFILES_DIR": str(paths.DBT_DIR),
         "DBT_SEND_ANONYMOUS_USAGE_STATS": "false",
+        "PYTHONUTF8": "1",  # dbt logs contain non-ASCII model descriptions
     }
     cmd = [dbt_executable(), *args]
     if quiet:

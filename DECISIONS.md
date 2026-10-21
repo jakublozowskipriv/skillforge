@@ -62,3 +62,7 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Fiszki: skróty klawiszowe (spacja, 1–4) i podgląd interwału na przyciskach · szybka powtórka; widać, co zrobi ocena.
 - 2026-10-21 · Drzewo kompetencji w zwijanym panelu obok lekcji · na telefonie (Tailscale) lekcja jest od razu widoczna.
 - 2026-10-21 · Testy UI: `AppTest.from_function` per strona + `from_file` dla startu aplikacji · AppTest nie przełącza stron zdefiniowanych funkcjami.
+- 2026-10-21 · Wspierane systemy: Windows i Linux; CI ma macierz `ubuntu-latest` + `windows-latest` (testy, `data build`, `content validate`), lint i mypy tylko na Ubuntu · użytkownik pracuje na Windows/PowerShell.
+- 2026-10-21 · dbt szukany jako `bin/dbt` lub `Scripts/dbt.exe` obok interpretera; ścieżka hurtowni przekazywana z `/` (`as_posix()`); `PYTHONUTF8=1` dla subprocesu dbt · różnice układu venv i kodowania między systemami.
+- 2026-10-21 · CLI: `stdout/stderr.reconfigure(errors="replace")` · na Windows przekierowane wyjście w cp1250/cp1252 nie wywraca komend na znakach `→`/`✓`.
+- 2026-10-21 · Instrukcje uruchomienia w README w dwóch wariantach (PowerShell i bash) · PowerShell 5.1 nie obsługuje `&&`.
