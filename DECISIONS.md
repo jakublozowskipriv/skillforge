@@ -38,3 +38,8 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Python kandydata: subprocess `python -I` + timeout, testy (args → expected) w YAML, porównanie strukturalne z tolerancją · izolacja awarii, nie sandbox bezpieczeństwa (jeden użytkownik, własny kod).
 - 2026-10-21 · `score` = 1.0 przy zaliczeniu, inaczej F1 wierszy (SQL, po TODO(learn) #3) lub udział zaliczonych testów (Python) · metryka częściowa potrzebna do porównywania wersji agentów w kolejnej fazie.
 - 2026-10-21 · Testy TODO(learn) jako `xfail(raises=NotImplementedError, strict=True)` · CI zielone przed implementacją; po implementacji XPASS(strict) przypomina o zdjęciu znacznika.
+- 2026-10-21 · Snapshoty `*.expected.json`: wiersze w kanonicznej kolejności, jeden wiersz na linię · czytelny code review i małe diffy w gicie.
+- 2026-10-21 · Zwroty mają dwa eventy `delivery_failed` · bez tego `count(distinct shipment_id)` dawało ten sam wynik co poprawne rozwiązanie; golden set musi mieć dane, które rozróżniają poprawne i błędne zapytania.
+- 2026-10-21 · CI: po testach pełny `data build` (scale 1.0) + `content validate` · snapshoty są liczone na pełnym datasecie; testy jednostkowe na małym (0.05).
+- 2026-10-21 · UI: `st.text_area` (monospace przez CSS) zamiast edytora z podświetlaniem · zero dodatkowych zależności w MVP; edytor w ROADMAP.
+- 2026-10-21 · Streamlit: `gatherUsageStats = false`, `toolbarMode = minimal` · brak telemetrii z lokalnej aplikacji, brak zbędnego „Deploy”.

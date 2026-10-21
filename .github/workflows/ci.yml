@@ -23,3 +23,7 @@ jobs:
         run: uv run mypy
       - name: Tests
         run: uv run pytest
+      - name: Build warehouse (full scale, dbt build with tests)
+        run: uv run skillforge data build
+      - name: Validate golden set (references reproduce snapshots)
+        run: uv run skillforge content validate

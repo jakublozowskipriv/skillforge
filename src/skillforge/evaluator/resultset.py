@@ -42,6 +42,13 @@ def normalize_value(value: Any) -> Cell:
     return str(value)
 
 
+_TYPE_RANK = {bool: 1, int: 2, float: 2, str: 3}
+
+
+def _row_sort_key(row: Row) -> tuple[tuple[int, Any], ...]:
+    return tuple((0, 0) if c is None else (_TYPE_RANK[type(c)], c) for c in row)
+
+
 @dataclass(frozen=True)
 class ResultSet:
     """Column names + rows of normalized cells. ``types`` are informational (DB type names)."""
@@ -82,10 +89,25 @@ class ResultSet:
     def from_dict(cls, data: dict[str, Any]) -> ResultSet:
         return cls.from_rows(data["columns"], data["rows"], data.get("types", ()))
 
+    def sorted(self) -> ResultSet:
+        """Rows in a canonical order (NULLs first, then by type and value) — for stable files."""
+        return ResultSet(self.columns, tuple(sorted(self.rows, key=_row_sort_key)), self.types)
+
     def to_json_file(self, path: Path) -> None:
-        path.write_text(
-            json.dumps(self.to_dict(), ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
+        """One row per line: snapshots stay readable in code review and produce small git diffs."""
+
+        def dump(value: Any) -> str:
+            return json.dumps(value, ensure_ascii=False)
+
+        rows = ",\n".join(f"    {dump(list(r))}" for r in self.rows)
+        text = (
+            "{\n"
+            f'  "columns": {dump(list(self.columns))},\n'
+            f'  "types": {dump(list(self.types))},\n'
+            f'  "rows": [\n{rows}\n  ]\n'
+            "}\n"
         )
+        path.write_text(text, encoding="utf-8")
 
     @classmethod
     def from_json_file(cls, path: Path) -> ResultSet:

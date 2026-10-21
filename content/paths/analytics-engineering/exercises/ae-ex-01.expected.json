@@ -1,0 +1,13 @@
+{
+  "columns": ["event_type", "raw_events", "unique_events", "duplicates"],
+  "types": ["VARCHAR", "BIGINT", "BIGINT", "BIGINT"],
+  "rows": [
+    ["delivered", 19862, 19268, 594],
+    ["delivery_failed", 1248, 1208, 40],
+    ["in_transit", 20172, 19593, 579],
+    ["label_created", 20324, 19722, 602],
+    ["out_for_delivery", 20086, 19485, 601],
+    ["picked_up", 20135, 19590, 545],
+    ["returned", 215, 209, 6]
+  ]
+}

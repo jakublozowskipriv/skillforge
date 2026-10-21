@@ -153,9 +153,13 @@ class Diff:
                 f"otrzymano {self.actual_row_count}."
             )
         if self.missing_rows:
-            lines.append(f"Brakuje {len(self.missing_rows)} oczekiwanych wierszy.")
+            lines.append(
+                f"Brakujące wiersze (są w oczekiwanym, nie ma w wyniku): {len(self.missing_rows)}."
+            )
         if self.extra_rows:
-            lines.append(f"{len(self.extra_rows)} wierszy nadmiarowych (nie ma ich w oczekiwanym).")
+            lines.append(
+                f"Nadmiarowe wiersze (są w wyniku, nie ma w oczekiwanym): {len(self.extra_rows)}."
+            )
         if self.cell_mismatches:
             cols = sorted({c for m in self.cell_mismatches for c in m.columns})
             lines.append(f"Różne wartości w kolumnach: {', '.join(cols)}.")

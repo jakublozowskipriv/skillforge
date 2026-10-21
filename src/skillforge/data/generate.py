@@ -11,6 +11,7 @@ Deliberate data-quality issues (material for staging exercises):
 - carrier codes in ``raw.shipments`` are inconsistent (case, whitespace),
 - ``raw.shipment_events`` contains duplicated events (same payload, new ``event_id``),
 - some events arrive late (``loaded_at`` days after ``event_at``) — incremental models,
+- returned parcels have two ``delivery_failed`` events (not every event type is 1 per shipment),
 - ``event_at`` lands as an ISO-8601 string, some ``location_city`` values are NULL.
 """
 
@@ -332,8 +333,10 @@ def generate(seed: int = DEFAULT_SEED, scale: float = 1.0) -> RawTables:
     add(has_pickup, "in_transit", in_transit_s, hub)
     add(delivered_ok | returned, "out_for_delivery", out_for_delivery_s, dest)
     add(failed_then_ok | returned, "delivery_failed", first_attempt, dest)
+    # Carriers try twice before returning a parcel: a second failed attempt the next day.
+    add(returned, "delivery_failed", second_attempt, dest)
     add(delivered_ok, "delivered", delivered_s, dest)
-    add(returned, "returned", first_attempt + 3 * DAY, origin)
+    add(returned, "returned", second_attempt + 2 * DAY, origin)
     events = pd.concat(parts, ignore_index=True)
     events = events[events["t"] < extract_s].reset_index(drop=True)
 
