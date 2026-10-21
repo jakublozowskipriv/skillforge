@@ -1,0 +1,209 @@
+version: 2
+
+models:
+  - name: dim_carrier
+    description: Carrier dimension (type 1 — attributes overwritten, no history).
+    columns:
+      - name: carrier_id
+        data_tests: [unique, not_null]
+      - name: carrier_code
+        data_tests: [unique, not_null]
+
+  - name: dim_carrier_sla
+    description: >
+      SCD type 2: one row per SLA version per carrier and service level.
+      valid_to is exclusive; open-ended versions get 9999-12-31.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            columns: [carrier_id, service_level, valid_from]
+    columns:
+      - name: carrier_sla_key
+        data_tests: [unique, not_null]
+      - name: carrier_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_carrier')
+                field: carrier_id
+
+  - name: dim_warehouse
+    columns:
+      - name: warehouse_id
+        data_tests: [unique, not_null]
+
+  - name: dim_date
+    columns:
+      - name: date_day
+        data_tests: [unique, not_null]
+
+  - name: fct_shipments
+    description: >
+      Grain: one row per shipment (parcel). Delivery milestones, SLA valid at pickup,
+      on-time flag and first-mile / transit durations.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: shipment_id
+        data_type: bigint
+        constraints: [{ type: not_null }]
+        data_tests: [unique]
+      - name: order_id
+        data_type: bigint
+        constraints: [{ type: not_null }]
+      - name: carrier_id
+        data_type: integer
+        constraints: [{ type: not_null }]
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_carrier')
+                field: carrier_id
+      - name: warehouse_id
+        data_type: integer
+        constraints: [{ type: not_null }]
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_warehouse')
+                field: warehouse_id
+      - name: carrier_sla_key
+        data_type: varchar
+        description: SLA version valid on the pickup date; NULL until picked up.
+        data_tests:
+          - not_null:
+              config:
+                where: "picked_up_at is not null"
+          - relationships:
+              arguments:
+                to: ref('dim_carrier_sla')
+                field: carrier_sla_key
+      - name: service_level
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [standard, express]
+      - name: parcel_size
+        data_type: varchar
+      - name: created_at
+        data_type: timestamp
+        description: Label created in the warehouse (start of first mile).
+      - name: picked_up_at
+        data_type: timestamp
+        description: Courier collected the parcel (end of first mile, start of SLA clock).
+      - name: first_failed_attempt_at
+        data_type: timestamp
+      - name: delivered_at
+        data_type: timestamp
+      - name: returned_at
+        data_type: timestamp
+      - name: failed_attempts
+        data_type: bigint
+      - name: sla_hours
+        data_type: integer
+      - name: promised_at
+        data_type: timestamp
+        description: picked_up_at + sla_hours.
+      - name: shipment_status
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [delivered, returned, in_transit, awaiting_pickup]
+      - name: is_on_time
+        data_type: boolean
+        description: delivered_at <= promised_at; NULL while not delivered.
+      - name: first_mile_hours
+        data_type: double
+      - name: transit_hours
+        data_type: double
+      - name: weight_kg
+        data_type: decimal(6,2)
+      - name: shipping_cost_pln
+        data_type: decimal(8,2)
+      - name: complaints_count
+        data_type: bigint
+      - name: has_complaint
+        data_type: boolean
+    # TODO(learn) #2 — after implementing tests/generic/timestamp_order.sql, uncomment:
+    # data_tests:
+    #   - timestamp_order:
+    #       arguments:
+    #         earlier: created_at
+    #         later: picked_up_at
+    #   - timestamp_order:
+    #       arguments:
+    #         earlier: picked_up_at
+    #         later: delivered_at
+
+  - name: fct_complaints
+    description: Grain — one row per complaint.
+    columns:
+      - name: complaint_id
+        data_tests: [unique, not_null]
+      - name: shipment_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('fct_shipments')
+                field: shipment_id
+      - name: category
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [damaged, late, lost, wrong_address, other]
+
+  - name: fct_shipment_events
+    description: Incremental event fact; grain — one row per unique tracking event.
+    columns:
+      - name: event_key
+        data_tests: [unique, not_null]
+
+  - name: fct_courier_pickups
+    description: >
+      TODO(learn) #1 — first-mile fact about courier visits at warehouses.
+      Grain: one row per scheduled pickup window (warehouse × carrier × day).
+    columns:
+      - name: pickup_id
+        data_tests: [unique, not_null]
+      - name: carrier_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_carrier')
+                field: carrier_id
+      - name: warehouse_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_warehouse')
+                field: warehouse_id
+      - name: pickup_date
+        data_tests: [not_null]
+      - name: is_no_show
+        data_tests: [not_null]
+      - name: is_on_time_pickup
+        data_tests: [not_null]
+
+unit_tests:
+  - name: test_pickup_on_time_flag
+    description: >
+      TODO(learn) #1 spec. A pickup is on time when the courier arrived no later than the end of
+      the window. A no-show is never on time. minutes_late = minutes after window_end_at
+      (0 when on time, NULL for a no-show).
+    model: fct_courier_pickups
+    given:
+      - input: ref('stg_raw__courier_pickups')
+        rows:
+          - { pickup_id: 1, warehouse_id: 1, carrier_id: 1, window_start_at: "2026-03-02 14:00:00", window_end_at: "2026-03-02 16:00:00", arrived_at: "2026-03-02 14:20:00", parcels_collected: 12, is_no_show: false }
+          - { pickup_id: 2, warehouse_id: 1, carrier_id: 1, window_start_at: "2026-03-03 14:00:00", window_end_at: "2026-03-03 16:00:00", arrived_at: "2026-03-03 16:30:00", parcels_collected: 9, is_no_show: false }
+          - { pickup_id: 3, warehouse_id: 1, carrier_id: 1, window_start_at: "2026-03-04 14:00:00", window_end_at: "2026-03-04 16:00:00", arrived_at: null, parcels_collected: null, is_no_show: true }
+    expect:
+      rows:
+        - { pickup_id: 1, pickup_date: "2026-03-02", is_on_time_pickup: true, minutes_late: 0 }
+        - { pickup_id: 2, pickup_date: "2026-03-03", is_on_time_pickup: false, minutes_late: 30 }
+        - { pickup_id: 3, pickup_date: "2026-03-04", is_on_time_pickup: false, minutes_late: null }

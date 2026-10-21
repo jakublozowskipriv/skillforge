@@ -1,0 +1,52 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Landing zone loaded by `skillforge data generate` (synthetic e-commerce logistics).
+      Treated as untouchable: every cleanup happens in staging.
+    schema: raw
+    loaded_at_field: loaded_at
+    tables:
+      - name: carriers
+        description: Carrier master data (fictional carriers).
+        columns:
+          - name: carrier_id
+            data_tests: [unique, not_null]
+      - name: carrier_sla_history
+        description: >
+          Promised delivery time (hours from pickup) per carrier and service level,
+          with validity ranges (SCD type 2 style). valid_to is exclusive, NULL = current.
+      - name: warehouses
+        columns:
+          - name: warehouse_id
+            data_tests: [unique, not_null]
+      - name: orders
+        columns:
+          - name: order_id
+            data_tests: [unique, not_null]
+      - name: shipments
+        description: >
+          One row per parcel. carrier_code is entered by hand in the WMS, so casing and
+          whitespace are inconsistent.
+        columns:
+          - name: shipment_id
+            data_tests: [unique, not_null]
+      - name: shipment_events
+        description: >
+          Tracking events from carrier APIs. At-least-once delivery: the same event can arrive
+          twice with a new event_id; some arrive days late (loaded_at >> event_at).
+          event_at is an ISO-8601 UTC string.
+        columns:
+          - name: event_id
+            data_tests: [unique, not_null]
+      - name: courier_pickups
+        description: >
+          Courier visits at warehouses (first mile). arrived_at NULL = courier did not show up.
+        columns:
+          - name: pickup_id
+            data_tests: [unique, not_null]
+      - name: complaints
+        columns:
+          - name: complaint_id
+            data_tests: [unique, not_null]

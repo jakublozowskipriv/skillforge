@@ -15,3 +15,10 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · Generator ładuje dane do schematu `raw` w DuckDB (a nie do plików CSV/Parquet) · ćwiczenia mogą działać z `enable_external_access=false`; `raw` gra rolę „landing zone” z EL.
 - 2026-10-21 · `raw.shipment_events.event_at` jako tekst ISO-8601 + celowy brud (kody przewoźników, duplikaty, spóźnione eventy, NULL-e) · materiał do ćwiczeń warstwy staging.
 - 2026-10-21 · Generator na numpy + pandas (z `pandas-stubs` dla mypy) · wektorowo ~1 s dla 100k eventów; pandas i tak jest zależnością Streamlit.
+- 2026-10-21 · dbt: staging i intermediate jako `view`, marts jako `table` · staging/int to tanie, zawsze świeże transformacje; marts to stabilny interfejs dla BI i ćwiczeń.
+- 2026-10-21 · Własne makro `generate_schema_name` (czyste schematy `staging`/`intermediate`/`marts`) · jeden lokalny target, nie ma czego izolować; czytelne `marts.fct_shipments` w ćwiczeniach.
+- 2026-10-21 · Bez pakietów dbt (dbt_utils): własne `surrogate_key` i `unique_combination_of_columns` · brak `dbt deps` = działa offline po świeżym klonie; przy okazji widać, że test to zapytanie zwracające błędne wiersze.
+- 2026-10-21 · Deduplikacja eventów w staging (`qualify row_number()`), zostaje najwcześniej załadowana kopia · duplikaty to cecha źródła (at-least-once), nie logiki biznesowej.
+- 2026-10-21 · `fct_shipments`: grain = przesyłka; zegar SLA startuje od `picked_up_at`, SLA z wersji SCD2 ważnej w dniu odbioru; kontrakt dbt `enforced` · on-time to definicja biznesowa — jawna w kodzie, YAML i kontrakcie.
+- 2026-10-21 · `fct_shipment_events` incremental (`delete+insert`, `unique_key`, lookback po `loaded_at` = 3 dni); `data build` zawsze `--full-refresh` · lekcja o spóźnionych eventach; raw jest generowany od zera.
+- 2026-10-21 · dbt uruchamiany jako subprocess z venv (`skillforge data build`), ścieżka hurtowni przez `SKILLFORGE_WAREHOUSE` · testy integracyjne budują małą hurtownię (scale=0.05) w katalogu tymczasowym.

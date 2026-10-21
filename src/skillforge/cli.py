@@ -50,5 +50,21 @@ def data_generate(
     typer.echo(f"→ {warehouse}")
 
 
+@data_app.command("build")
+def data_build(
+    seed: SeedOpt = 42,
+    scale: ScaleOpt = 1.0,
+    warehouse: WarehouseOpt = paths.WAREHOUSE_PATH,
+) -> None:
+    """Generate raw data and run `dbt build` (models + tests). One command after a fresh clone."""
+    from skillforge.data.build import build_warehouse
+
+    code = build_warehouse(warehouse, seed=seed, scale=scale)
+    if code != 0:
+        typer.secho("dbt build failed — see output above.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code)
+    typer.secho(f"Warehouse ready → {warehouse}", fg=typer.colors.GREEN)
+
+
 if __name__ == "__main__":
     app()

@@ -1,0 +1,98 @@
+version: 2
+
+models:
+  - name: stg_raw__carriers
+    description: Carriers, one row per carrier.
+    columns:
+      - name: carrier_id
+        data_tests: [unique, not_null]
+      - name: carrier_code
+        data_tests: [unique, not_null]
+
+  - name: stg_raw__carrier_sla_history
+    description: SLA validity periods per carrier and service level.
+    columns:
+      - name: service_level
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [standard, express]
+
+  - name: stg_raw__warehouses
+    columns:
+      - name: warehouse_id
+        data_tests: [unique, not_null]
+
+  - name: stg_raw__orders
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+      - name: warehouse_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_raw__warehouses')
+                field: warehouse_id
+
+  - name: stg_raw__shipments
+    description: Shipments with normalized carrier codes.
+    columns:
+      - name: shipment_id
+        data_tests: [unique, not_null]
+      - name: carrier_code
+        description: Upper-cased, trimmed carrier code; must exist in carriers.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_raw__carriers')
+                field: carrier_code
+
+  - name: stg_raw__shipment_events
+    description: Typed and deduplicated tracking events.
+    data_tests:
+      - unique_combination_of_columns:
+          arguments:
+            columns: [shipment_id, event_type, event_at]
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: event_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  [label_created, picked_up, in_transit, out_for_delivery,
+                   delivery_failed, delivered, returned]
+
+  - name: stg_raw__courier_pickups
+    columns:
+      - name: pickup_id
+        data_tests: [unique, not_null]
+
+  - name: stg_raw__complaints
+    columns:
+      - name: complaint_id
+        data_tests: [unique, not_null]
+      - name: shipment_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('stg_raw__shipments')
+                field: shipment_id
+
+unit_tests:
+  - name: test_carrier_code_is_normalized
+    description: Free-text carrier codes from the WMS are trimmed and upper-cased.
+    model: stg_raw__shipments
+    given:
+      - input: source('raw', 'shipments')
+        rows:
+          - { shipment_id: 1, carrier_code: " swift" }
+          - { shipment_id: 2, carrier_code: "Pako " }
+          - { shipment_id: 3, carrier_code: "NORTH" }
+    expect:
+      rows:
+        - { shipment_id: 1, carrier_code: "SWIFT" }
+        - { shipment_id: 2, carrier_code: "PAKO" }
+        - { shipment_id: 3, carrier_code: "NORTH" }

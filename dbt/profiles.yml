@@ -1,0 +1,8 @@
+skillforge:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      # `skillforge data build` sets SKILLFORGE_WAREHOUSE to an absolute path.
+      path: "{{ env_var('SKILLFORGE_WAREHOUSE', '../var/warehouse.duckdb') }}"
+      threads: 1
