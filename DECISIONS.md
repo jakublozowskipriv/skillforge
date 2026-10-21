@@ -10,3 +10,8 @@ Jedna linijka na decyzję: data · decyzja · dlaczego. Decyzje zmieniające arc
 - 2026-10-21 · CLI `typer` jako jedyny interfejs komend Claude do danych · komendy `.claude/commands/` nie dotykają baz bezpośrednio ⇒ testowalny, stabilny kontrakt.
 - 2026-10-21 · Ścieżki plików w `skillforge.paths`, nadpisywalne przez `SKILLFORGE_ROOT` / `SKILLFORGE_VAR` · testy działają na katalogach tymczasowych.
 - 2026-10-21 · Ruff: line-length 100, reguły E/F/W/I/B/UP/SIM/RUF/PTH/N; mypy `strict` dla `src` i `tests` · jeden spójny standard od pierwszego commita.
+- 2026-10-21 · Fikcyjni przewoźnicy (SwiftParcel, NorthExpress, Pakomat24…) zamiast prawdziwych marek · syntetyczne wyniki nie mogą wyglądać jak twierdzenia o realnych firmach.
+- 2026-10-21 · Stały zakres dat datasetu (2026-01-01..06-30, ekstrakt 2026-07-03), a nie „względem dziś” · snapshoty ćwiczeń muszą być stabilne w czasie.
+- 2026-10-21 · Generator ładuje dane do schematu `raw` w DuckDB (a nie do plików CSV/Parquet) · ćwiczenia mogą działać z `enable_external_access=false`; `raw` gra rolę „landing zone” z EL.
+- 2026-10-21 · `raw.shipment_events.event_at` jako tekst ISO-8601 + celowy brud (kody przewoźników, duplikaty, spóźnione eventy, NULL-e) · materiał do ćwiczeń warstwy staging.
+- 2026-10-21 · Generator na numpy + pandas (z `pandas-stubs` dla mypy) · wektorowo ~1 s dla 100k eventów; pandas i tak jest zależnością Streamlit.
